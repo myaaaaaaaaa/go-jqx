@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func testRun(t *testing.T, stdin, want string, p Program) {
+func testRun(t *testing.T, stdin, want string, p *Program) {
 	t.Helper()
 
 	var got bytes.Buffer
@@ -28,20 +28,20 @@ func testRun(t *testing.T, stdin, want string, p Program) {
 }
 
 func TestProgram(t *testing.T) {
-	testRun(t, "[]  []", "[] []", Program{})
-	testRun(t, "[]  [}", "error", Program{})
-	testRun(t, "[]  []", "{}", Program{StdinIsTerminal: true})
+	testRun(t, "[]  []", "[] []", &Program{})
+	testRun(t, "[]  [}", "error", &Program{})
+	testRun(t, "[]  []", "{}", &Program{StdinIsTerminal: true})
 
-	testRun(t, "[10]", "[10]", Program{})
-	testRun(t, "[10]", "[\n\t10\n]", Program{StdoutIsTerminal: true})
+	testRun(t, "[10]", "[10]", &Program{})
+	testRun(t, "[10]", "[\n\t10\n]", &Program{StdoutIsTerminal: true})
 
-	testRun(t, `"a"`, `"a"`, Program{})
-	testRun(t, `"a"`, `a`, Program{StdoutIsTerminal: true})
+	testRun(t, `"a"`, `"a"`, &Program{})
+	testRun(t, `"a"`, `a`, &Program{StdoutIsTerminal: true})
 
-	testRun(t, "[10]", "[10]", Program{})
-	testRun(t, "[10]", "[10]", Program{Args: []string{"."}})
-	testRun(t, "[10]", "10", Program{Args: []string{".[]"}})
-	testRun(t, "[10]", "error", Program{Args: []string{"|"}})
+	testRun(t, "[10]", "[10]", &Program{})
+	testRun(t, "[10]", "[10]", &Program{Args: []string{"."}})
+	testRun(t, "[10]", "10", &Program{Args: []string{".[]"}})
+	testRun(t, "[10]", "error", &Program{Args: []string{"|"}})
 }
 func TestFS(t *testing.T) {
 	testFS := State{Files: map[string]any{
@@ -51,18 +51,33 @@ func TestFS(t *testing.T) {
 	}}.FS()
 
 	p := Program{StdinIsTerminal: true}
-	testRun(t, "", "{}", p)
+	testRun(t, "", "{}", &p)
 
 	p.Open = testFS.Open
-	testRun(t, "", "{}", p)
+	testRun(t, "", "{}", &p)
 
 	p.Args = []string{`.[][][]`, "a.json"}
-	testRun(t, "", "1 2 3", p)
+	testRun(t, "", "1 2 3", &p)
 	p.Args = []string{`.[][]`, "b.json"}
-	testRun(t, "", "1 2 3", p)
+	testRun(t, "", "1 2 3", &p)
 
 	p.Args = []string{`.`, "c.json"}
-	testRun(t, "", "error", p)
+	testRun(t, "", "error", &p)
 	p.Args = []string{`.`, "c.notjson"}
-	testRun(t, "", "error", p)
+	testRun(t, "", "error", &p)
+}
+func TestDry(t *testing.T) {
+	const q = `snapshot("\(.).json"; .)`
+	p := Program{}
+
+	for range 3 {
+		p.Args = []string{"--dry-run", q}
+		testRun(t, `false`, `false false.json`, &p)
+		assertEqual(t, p.State.Files == nil, true)
+
+		p.Args = []string{q}
+		testRun(t, `false`, `false`, &p)
+		assertEqual(t, len(p.State.Files), 1)
+		assertEqual(t, p.State.Files["false.json"], false)
+	}
 }

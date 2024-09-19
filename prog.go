@@ -60,7 +60,7 @@ func (f *flags) populate(args []string) {
 		info, _ := debug.ReadBuildInfo()
 		if info != nil {
 			fmt.Fprintln(out)
-			fmt.Fprintln(out, "version", info.Main.Version, "built with", info.GoVersion)
+			fmt.Fprintln(out, "jqx", info.Main.Version, "built with", info.GoVersion)
 			fmt.Fprintf(out, "Update: go install %s@latest\n\n", info.Path)
 		}
 	}

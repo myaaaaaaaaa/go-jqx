@@ -11,7 +11,7 @@ func testRun(t *testing.T, stdin, want string, p *Program) {
 
 	var got bytes.Buffer
 
-	p.Stdin = bytes.NewBufferString(stdin)
+	p.Stdin = bytes.NewBufferString(strings.ReplaceAll(stdin, " ", "\n"))
 	p.Stdout = &got
 
 	err := p.Main()
@@ -42,6 +42,9 @@ func TestProgram(t *testing.T) {
 	testRun(t, "[10]", "[10]", &Program{Args: []string{"."}})
 	testRun(t, "[10]", "10", &Program{Args: []string{".[]"}})
 	testRun(t, "[10]", "error", &Program{Args: []string{"|"}})
+
+	testRun(t, `] })`, `] })`, &Program{Args: []string{"-r"}})
+	testRun(t, `] })`, `] 1 }) 2`, &Program{Args: []string{"-r", "., length"}})
 }
 func TestFS(t *testing.T) {
 	testFS := State{Files: map[string]any{

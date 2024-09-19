@@ -1,6 +1,7 @@
 package jqx
 
 import (
+	"bufio"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -12,7 +13,16 @@ import (
 	"slices"
 )
 
-func decoder(r io.Reader, name string) iter.Seq[any] {
+func decoder(r io.Reader, name string, raw bool) iter.Seq[any] {
+	if raw {
+		return func(yield func(any) bool) {
+			scanner := bufio.NewScanner(r)
+			for scanner.Scan() {
+				yield(scanner.Text())
+			}
+		}
+	}
+
 	return func(yield func(any) bool) {
 		decoder := json.NewDecoder(r)
 		for {
@@ -49,7 +59,7 @@ type flags struct {
 
 func (f *flags) populate(args []string) {
 	fset := flag.NewFlagSet("", flag.ExitOnError)
-	fset.BoolVar(&f.raw, "r", false, `stdin, stdout, and files are newline-separated strings (unimplemented)`)
+	fset.BoolVar(&f.raw, "r", false, `stdin, stdout, and files are newline-separated strings`)
 	fset.BoolVar(&f.dry, "dry-run", false, `don't persist snapshots`)
 
 	usage := fset.Usage
@@ -86,7 +96,7 @@ func (p *Program) Main() (rtErr error) {
 		failif(err, "loading")
 		defer file.Close()
 
-		v := slices.Collect(decoder(file, filename))
+		v := slices.Collect(decoder(file, filename, f.raw))
 		if len(v) == 1 {
 			files[filename] = v[0]
 		} else {
@@ -94,13 +104,13 @@ func (p *Program) Main() (rtErr error) {
 		}
 	}
 
-	input := decoder(p.Stdin, "stdin")
+	input := decoder(p.Stdin, "stdin", f.raw)
 	if p.StdinIsTerminal {
 		input = func(yield func(any) bool) { yield(files) }
 	}
 
 	marshal := json.Marshal
-	if p.StdoutIsTerminal {
+	if p.StdoutIsTerminal || f.raw {
 		marshal = func(v any) ([]byte, error) {
 			if v, ok := v.(string); ok {
 				return []byte(v), nil

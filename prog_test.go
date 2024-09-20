@@ -34,6 +34,7 @@ func TestProgram(t *testing.T) {
 
 	testRun(t, "[10]", "[10]", &Program{})
 	testRun(t, "[10]", "[\n\t10\n]", &Program{StdoutIsTerminal: true})
+	testRun(t, "[10]", "[\n\t10\n]", &Program{Args: []string{"-t"}})
 
 	testRun(t, `"a"`, `"a"`, &Program{})
 	testRun(t, `"a"`, `a`, &Program{StdoutIsTerminal: true})

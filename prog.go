@@ -53,12 +53,14 @@ type flags struct {
 	script    string
 	filenames []string
 
+	tab bool
 	raw bool
 	dry bool
 }
 
 func (f *flags) populate(args []string) {
 	fset := flag.NewFlagSet("", flag.ExitOnError)
+	fset.BoolVar(&f.tab, "t", false, `always indent output`)
 	fset.BoolVar(&f.raw, "r", false, `stdin, stdout, and files are newline-separated strings`)
 	fset.BoolVar(&f.dry, "dry-run", false, `don't persist snapshots`)
 
@@ -110,15 +112,18 @@ func (p *Program) Main() (rtErr error) {
 	}
 
 	marshal := json.Marshal
-	if p.StdoutIsTerminal || f.raw {
+	if f.tab || (p.StdoutIsTerminal && !f.raw) {
+		marshal = func(v any) ([]byte, error) {
+			return json.MarshalIndent(v, "", "\t")
+		}
+	}
+	if f.raw || p.StdoutIsTerminal {
+		oldMarshal := marshal
 		marshal = func(v any) ([]byte, error) {
 			if v, ok := v.(string); ok {
 				return []byte(v), nil
 			}
-			if f.raw {
-				return json.Marshal(v)
-			}
-			return json.MarshalIndent(v, "", "\t")
+			return oldMarshal(v)
 		}
 	}
 

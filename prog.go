@@ -97,7 +97,7 @@ func (p *Program) Main() (rtErr error) {
 		defer file.Close()
 
 		v := slices.Collect(decoder(file, filename, f.raw))
-		if len(v) == 1 {
+		if len(v) == 1 && !f.raw {
 			files[filename] = v[0]
 		} else {
 			files[filename] = v

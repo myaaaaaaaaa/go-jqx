@@ -51,6 +51,8 @@ func TestFS(t *testing.T) {
 		"a.json":    "[1][2][3]",
 		"b.json":    "[1,2,3]",
 		"c.notjson": "[}",
+		"d.txt":     "foo",
+		"e.txt":     "q\nw\ne\nr\nt\ny",
 	}}.FS()
 
 	p := Program{StdinIsTerminal: true}
@@ -64,10 +66,15 @@ func TestFS(t *testing.T) {
 	p.Args = []string{`.[][]`, "b.json"}
 	testRun(t, "", "1 2 3", &p)
 
-	p.Args = []string{`.`, "c.json"}
-	testRun(t, "", "error", &p)
-	p.Args = []string{`.`, "c.notjson"}
-	testRun(t, "", "error", &p)
+	for _, file := range []string{"c.json", "c.notjson", "d.txt", "e.txt"} {
+		p.Args = []string{".", file}
+		testRun(t, "", "error", &p)
+	}
+
+	p.Args = []string{"-r", ".[][] | .+.", "d.txt"}
+	testRun(t, "", "foofoo", &p)
+	p.Args = []string{"-r", ".[][] | .+.", "e.txt"}
+	testRun(t, "", "qq ww ee rr tt yy", &p)
 }
 func TestDry(t *testing.T) {
 	const q = `snapshot("\(.).json"; .)`

@@ -78,7 +78,7 @@ func TestFS(t *testing.T) {
 	testRun(t, "", "qq ww ee rr tt yy", &p)
 }
 func TestDry(t *testing.T) {
-	const q = `snapshot("\(.).json"; .)`
+	const q = `snapshot("\(.).json"; [.])`
 	p := Program{}
 
 	for range 3 {
@@ -89,6 +89,17 @@ func TestDry(t *testing.T) {
 		p.Args = []string{q}
 		testRun(t, `false`, `false`, &p)
 		assertEqual(t, len(p.State.Files), 1)
-		assertEqual(t, p.State.Files["false.json"], false)
+		assertEqual(t,
+			fsGetText(p.State.FS(), "false.json"),
+			"[false]",
+		)
+
+		p.Args = []string{"-t", q}
+		testRun(t, `false`, `false`, &p)
+		assertEqual(t, len(p.State.Files), 1)
+		assertEqual(t,
+			fsGetText(p.State.FS(), "false.json"),
+			"[\n\tfalse\n]",
+		)
 	}
 }

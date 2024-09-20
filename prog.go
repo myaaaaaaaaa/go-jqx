@@ -141,6 +141,7 @@ func (p *Program) Main() (rtErr error) {
 		}
 		p.State.Files = nil
 	}
+	p.State.tab = f.tab
 
 	return nil
 }

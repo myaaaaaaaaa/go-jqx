@@ -15,6 +15,7 @@ type FanOut func(any) iter.Seq[any]
 
 type State struct {
 	Files map[string]any
+	tab   bool
 }
 
 func (s *State) snapshot(input any, kv []any) (rt any) {
@@ -72,7 +73,11 @@ func (s State) FS() fs.FS {
 		case string:
 			data = []byte(v)
 		default:
-			data = must(json.Marshal(v))
+			if s.tab {
+				data = must(json.MarshalIndent(v, "", "\t"))
+			} else {
+				data = must(json.Marshal(v))
+			}
 		}
 
 		rt[k] = &fstest.MapFile{Data: data}

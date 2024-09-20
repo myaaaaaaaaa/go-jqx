@@ -1,7 +1,6 @@
 package jqx
 
 import (
-	"io/fs"
 	"slices"
 	"strings"
 	"testing"
@@ -47,8 +46,7 @@ func TestSnapshot(t *testing.T) {
 
 	for _, filename := range filenames {
 		filename := filename.(string)
-		data := must(fs.ReadFile(fsys, filename))
-		cat = append(cat, string(data))
+		cat = append(cat, fsGetText(fsys, filename))
 	}
 
 	assertEqual(t, len(filenames), 5)

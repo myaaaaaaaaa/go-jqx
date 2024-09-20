@@ -115,6 +115,9 @@ func (p *Program) Main() (rtErr error) {
 			if v, ok := v.(string); ok {
 				return []byte(v), nil
 			}
+			if f.raw {
+				return json.Marshal(v)
+			}
 			return json.MarshalIndent(v, "", "\t")
 		}
 	}

@@ -44,7 +44,7 @@ func TestProgram(t *testing.T) {
 	testRun(t, "[10]", "error", &Program{Args: []string{"|"}})
 
 	testRun(t, `] })`, `] })`, &Program{Args: []string{"-r"}})
-	testRun(t, `] })`, `] 1 }) 2`, &Program{Args: []string{"-r", "., length"}})
+	testRun(t, `] })`, `] [1] }) [2]`, &Program{Args: []string{"-r", "., [length]"}})
 }
 func TestFS(t *testing.T) {
 	testFS := State{Files: map[string]any{

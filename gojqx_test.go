@@ -2,7 +2,6 @@ package jqx
 
 import (
 	"slices"
-	"strings"
 	"testing"
 )
 
@@ -36,36 +35,25 @@ func TestError(t *testing.T) {
 	assertEqual(t, err("|") != nil, true)
 	assertEqual(t, err("maybe") != nil, true)
 }
-func TestSnapshot(t *testing.T) {
+func TestState(t *testing.T) {
 	state := State{}
-	query := state.Compile(`to_entries[] | snapshot(.key;.value) | .key`)
+	query := state.Compile(`
+		fromjson | to_entries[] |
+		snapshot(.key;.value+.value) | .key+.key
+	`)
 
-	entries := map[string]any{
-		"a.txt":    "aaa",
-		"b/b.json": "ugh",
-		"c/c.json": []any{2, 8},
-		"d.json":   map[string]any{"e": 10},
-		"f.json":   8,
-	}
+	keys := slices.Collect(query(`{"a":"aa", "c":[3], "q":{"e":10}, "r":5}`))
 
-	filenames := slices.Collect(query(entries))
-	cat := []string{}
+	assertEqual(t, len(keys), 4)
+	assertEqual(t, len(state.Files), 4)
 
-	fsys := toFS(state.Files, nil)
-	for _, filename := range filenames {
-		filename := filename.(string)
-		cat = append(cat, fileText(fsys, filename))
-	}
+	state = State{Globals: map[string]any{
+		"$k": keys,
+		"$v": state.Files,
+	}}
+	query = state.Compile(`[$k[],$v[]] | tostring`)
 
-	assertEqual(t, len(filenames), 5)
-
-	assertEqual(t,
-		[5]any(filenames),
-		[...]any{"a.txt", "b/b.json", "c/c.json", "d.json", "f.json"},
-	)
-
-	assertEqual(t,
-		strings.Join(cat, " "),
-		`aaa ugh [2,8] {"e":10} 8`,
-	)
+	got := slices.Collect(query(nil))
+	assertEqual(t, len(got), 1)
+	assertEqual(t, got[0], `["aa","cc","qq","rr","aaaa",[3,3],{"e":10},10]`)
 }

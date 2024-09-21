@@ -124,7 +124,9 @@ func (p *Program) Main() (rtErr error) {
 		!f.jsonOut,
 	)
 
-	var state State
+	state := State{
+		Globals: map[string]any{"$files": files},
+	}
 	query := state.Compile(constString(f.script))
 	for v := range input {
 		for v := range query(v) {

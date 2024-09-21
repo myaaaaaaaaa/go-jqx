@@ -2,6 +2,8 @@ package jqx
 
 import (
 	"iter"
+	"maps"
+	"slices"
 
 	"github.com/itchyny/gojq"
 )
@@ -10,7 +12,8 @@ type constString string
 type FanOut func(any) iter.Seq[any]
 
 type State struct {
-	Files map[string]any
+	Files   map[string]any
+	Globals map[string]any
 }
 
 func (s *State) snapshot(input any, kv []any) (rt any) {
@@ -29,15 +32,22 @@ func (s *State) Compile(code constString) FanOut {
 	parsed, err := gojq.Parse(string(code))
 	failif(err, "parsing query")
 
+	globalKeys := slices.Sorted(maps.Keys(s.Globals))
+	var globalValues []any
+	for _, globalKey := range globalKeys {
+		globalValues = append(globalValues, s.Globals[globalKey])
+	}
+
 	compiled, err := gojq.Compile(
 		parsed,
 		gojq.WithFunction("snapshot", 2, 2, s.snapshot),
+		gojq.WithVariables(globalKeys),
 	)
 	failif(err, "compiling query")
 
 	return func(v any) iter.Seq[any] {
 		return func(yield func(any) bool) {
-			iter := compiled.Run(v)
+			iter := compiled.Run(v, globalValues...)
 
 			for {
 				v, ok := iter.Next()

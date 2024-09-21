@@ -67,6 +67,8 @@ func TestFS(t *testing.T) {
 	p.Open = toFS(testFiles, nil).Open
 	testRun(t, "", "{}", &p)
 
+	p.Args = []string{`"a.json" | $files[.][][]`, "a.json"}
+	testRun(t, "", "1 2 3", &p)
 	p.Args = []string{`.[][][]`, "a.json"}
 	testRun(t, "", "1 2 3", &p)
 	p.Args = []string{`.[][]`, "b.json"}

@@ -1,7 +1,6 @@
 package jqx
 
 import (
-	"fmt"
 	"iter"
 
 	"github.com/itchyny/gojq"
@@ -46,10 +45,8 @@ func (s *State) Compile(code constString) FanOut {
 					break
 				}
 
-				if err, ok := v.(error); ok {
-					fmt.Println(err)
-					continue
-				}
+				err, _ := v.(error)
+				failif(err, "running query")
 
 				if !yield(v) {
 					break

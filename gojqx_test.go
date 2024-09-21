@@ -12,6 +12,15 @@ func TestCompile(t *testing.T) {
 
 	assertEqual(t, len(got), 3)
 	assertEqual(t, [3]any(got), [...]any{"1", "3", "5"})
+
+	i := 0
+	for v := range query(100) {
+		if len(v.(string)) != 1 {
+			break
+		}
+		i++
+	}
+	assertEqual(t, i, 5)
 }
 func TestError(t *testing.T) {
 	err := func(code string) (rt error) {

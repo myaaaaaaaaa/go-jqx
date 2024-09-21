@@ -51,9 +51,9 @@ func TestState(t *testing.T) {
 		"$k": keys,
 		"$v": state.Files,
 	}}
-	query = state.Compile(`[$k[],$v[]] | tostring`)
+	query = state.Compile(`[$k[],$v[] | tostring] | join(" ")`)
 
 	got := slices.Collect(query(nil))
 	assertEqual(t, len(got), 1)
-	assertEqual(t, got[0], `["aa","cc","qq","rr","aaaa",[3,3],{"e":10},10]`)
+	assertEqual(t, got[0], `aa cc qq rr aaaa [3,3] {"e":10} 10`)
 }

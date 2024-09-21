@@ -40,8 +40,8 @@ func decoder(r io.Reader, name string, raw bool) iter.Seq[any] {
 type Program struct {
 	Args []string
 
-	Open  func(string) (fs.File, error)
-	State State
+	Open func(string) (fs.File, error)
+	FS   fs.FS
 
 	Stdin  io.Reader
 	Stdout io.Writer
@@ -127,7 +127,8 @@ func (p *Program) Main() (rtErr error) {
 		}
 	}
 
-	query := p.State.Compile(constString(f.script))
+	var state State
+	query := state.Compile(constString(f.script))
 	for v := range input {
 		for v := range query(v) {
 			v := must(marshal(v))
@@ -136,12 +137,12 @@ func (p *Program) Main() (rtErr error) {
 	}
 
 	if f.dry {
-		for _, file := range slices.Collect(maps.Keys(p.State.Files)) {
+		for _, file := range slices.Collect(maps.Keys(state.Files)) {
 			fmt.Fprintln(p.Stdout, file)
 		}
-		p.State.Files = nil
+		state.Files = nil
 	}
-	p.State.tab = f.tab
+	p.FS = toFS(state.Files, f.tab)
 
 	return nil
 }

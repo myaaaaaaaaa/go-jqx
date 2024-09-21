@@ -1,6 +1,11 @@
 package jqx
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+	"io/fs"
+	"testing/fstest"
+)
 
 type failError string
 
@@ -30,4 +35,27 @@ func catch[T error](rt *error) {
 	default:
 		panic(err)
 	}
+}
+
+func toFS(m map[string]any, tab bool) fs.FS {
+	rt := fstest.MapFS{}
+
+	for k, v := range m {
+		var data []byte
+
+		switch v := v.(type) {
+		case string:
+			data = []byte(v)
+		default:
+			if tab {
+				data = must(json.MarshalIndent(v, "", "\t"))
+			} else {
+				data = must(json.Marshal(v))
+			}
+		}
+
+		rt[k] = &fstest.MapFile{Data: data}
+	}
+
+	return rt
 }

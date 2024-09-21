@@ -37,7 +37,5 @@ func main() {
 	}
 
 	try(prog.Main())
-
-	fsys := prog.State.FS()
-	try(os.CopyFS(".", fsys))
+	try(os.CopyFS(".", prog.FS))
 }

@@ -13,7 +13,10 @@ func assertEqual[T comparable](t *testing.T, got T, want T) {
 	}
 }
 
-func fsGetText(fsys fs.FS, filename string) string {
-	data := must(fs.ReadFile(fsys, filename))
+func fileText(fsys fs.FS, filename string) string {
+	data, err := fs.ReadFile(fsys, filename)
+	if err != nil {
+		return "error"
+	}
 	return string(data)
 }

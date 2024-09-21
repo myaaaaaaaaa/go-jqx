@@ -1,11 +1,8 @@
 package jqx
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/fs"
 	"iter"
-	"testing/fstest"
 
 	"github.com/itchyny/gojq"
 )
@@ -15,7 +12,6 @@ type FanOut func(any) iter.Seq[any]
 
 type State struct {
 	Files map[string]any
-	tab   bool
 }
 
 func (s *State) snapshot(input any, kv []any) (rt any) {
@@ -61,27 +57,4 @@ func (s *State) Compile(code constString) FanOut {
 			}
 		}
 	}
-}
-
-func (s State) FS() fs.FS {
-	rt := fstest.MapFS{}
-
-	for k, v := range s.Files {
-		var data []byte
-
-		switch v := v.(type) {
-		case string:
-			data = []byte(v)
-		default:
-			if s.tab {
-				data = must(json.MarshalIndent(v, "", "\t"))
-			} else {
-				data = must(json.Marshal(v))
-			}
-		}
-
-		rt[k] = &fstest.MapFile{Data: data}
-	}
-
-	return rt
 }

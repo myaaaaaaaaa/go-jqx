@@ -42,11 +42,10 @@ func TestSnapshot(t *testing.T) {
 	filenames := slices.Collect(query(entries))
 	cat := []string{}
 
-	fsys := state.FS()
-
+	fsys := toFS(state.Files, false)
 	for _, filename := range filenames {
 		filename := filename.(string)
-		cat = append(cat, fsGetText(fsys, filename))
+		cat = append(cat, fileText(fsys, filename))
 	}
 
 	assertEqual(t, len(filenames), 5)

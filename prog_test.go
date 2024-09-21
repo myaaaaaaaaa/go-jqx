@@ -2,6 +2,7 @@ package jqx
 
 import (
 	"bytes"
+	"io/fs"
 	"strings"
 	"testing"
 )
@@ -48,18 +49,18 @@ func TestProgram(t *testing.T) {
 	testRun(t, `] })`, `] [1] }) [2]`, &Program{Args: []string{"-r", "., [length]"}})
 }
 func TestFS(t *testing.T) {
-	testFS := State{Files: map[string]any{
+	testFiles := map[string]any{
 		"a.json":    "[1][2][3]",
 		"b.json":    "[1,2,3]",
 		"c.notjson": "[}",
 		"d.txt":     "foo",
 		"e.txt":     "q\nw\ne\nr\nt\ny",
-	}}.FS()
+	}
 
 	p := Program{StdinIsTerminal: true}
 	testRun(t, "", "{}", &p)
 
-	p.Open = testFS.Open
+	p.Open = toFS(testFiles, false).Open
 	testRun(t, "", "{}", &p)
 
 	p.Args = []string{`.[][][]`, "a.json"}
@@ -80,26 +81,25 @@ func TestFS(t *testing.T) {
 func TestDry(t *testing.T) {
 	const q = `snapshot("\(.).json"; [.])`
 	p := Program{}
+	files := func() string {
+		rt := must(fs.Glob(p.FS, "*"))
+		return strings.Join(rt, " ")
+	}
 
 	for range 3 {
 		p.Args = []string{"--dry-run", q}
 		testRun(t, `false`, `false false.json`, &p)
-		assertEqual(t, p.State.Files == nil, true)
+		assertEqual(t, files(), "")
+		assertEqual(t, fileText(p.FS, "false.json"), "error")
 
 		p.Args = []string{q}
 		testRun(t, `false`, `false`, &p)
-		assertEqual(t, len(p.State.Files), 1)
-		assertEqual(t,
-			fsGetText(p.State.FS(), "false.json"),
-			"[false]",
-		)
+		assertEqual(t, files(), "false.json")
+		assertEqual(t, fileText(p.FS, "false.json"), "[false]")
 
 		p.Args = []string{"-t", q}
 		testRun(t, `false`, `false`, &p)
-		assertEqual(t, len(p.State.Files), 1)
-		assertEqual(t,
-			fsGetText(p.State.FS(), "false.json"),
-			"[\n\tfalse\n]",
-		)
+		assertEqual(t, files(), "false.json")
+		assertEqual(t, fileText(p.FS, "false.json"), "[\n\tfalse\n]")
 	}
 }

@@ -128,7 +128,7 @@ func (p *Program) Main() (rtErr error) {
 	}
 
 	if f.dry {
-		for _, file := range slices.Collect(maps.Keys(state.Files)) {
+		for _, file := range slices.Sorted(maps.Keys(state.Files)) {
 			fmt.Fprintln(p.Stdout, file)
 		}
 		state.Files = nil

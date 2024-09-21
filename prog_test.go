@@ -60,7 +60,7 @@ func TestFS(t *testing.T) {
 	p := Program{StdinIsTerminal: true}
 	testRun(t, "", "{}", &p)
 
-	p.Open = toFS(testFiles, false).Open
+	p.Open = toFS(testFiles, nil).Open
 	testRun(t, "", "{}", &p)
 
 	p.Args = []string{`.[][][]`, "a.json"}

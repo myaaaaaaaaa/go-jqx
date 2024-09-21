@@ -111,21 +111,10 @@ func (p *Program) Main() (rtErr error) {
 		input = func(yield func(any) bool) { yield(files) }
 	}
 
-	marshal := json.Marshal
-	if f.tab || (p.StdoutIsTerminal && !f.raw) {
-		marshal = func(v any) ([]byte, error) {
-			return json.MarshalIndent(v, "", "\t")
-		}
-	}
-	if f.raw || p.StdoutIsTerminal {
-		oldMarshal := marshal
-		marshal = func(v any) ([]byte, error) {
-			if v, ok := v.(string); ok {
-				return []byte(v), nil
-			}
-			return oldMarshal(v)
-		}
-	}
+	marshal := getMarshaler(
+		f.tab || (p.StdoutIsTerminal && !f.raw),
+		f.raw || p.StdoutIsTerminal,
+	)
 
 	var state State
 	query := state.Compile(constString(f.script))
@@ -142,7 +131,7 @@ func (p *Program) Main() (rtErr error) {
 		}
 		state.Files = nil
 	}
-	p.FS = toFS(state.Files, f.tab)
+	p.FS = toFS(state.Files, getMarshaler(f.tab, true)) // f.raw))
 
 	return nil
 }

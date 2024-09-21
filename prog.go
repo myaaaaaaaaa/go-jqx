@@ -18,8 +18,12 @@ func decoder(r io.Reader, name string, raw bool) iter.Seq[any] {
 		return func(yield func(any) bool) {
 			scanner := bufio.NewScanner(r)
 			for scanner.Scan() {
-				yield(scanner.Text())
+				if !yield(scanner.Text()) {
+					break
+				}
 			}
+			err := scanner.Err()
+			failif(err, "scanning %s", name)
 		}
 	}
 
@@ -32,7 +36,9 @@ func decoder(r io.Reader, name string, raw bool) iter.Seq[any] {
 				return
 			}
 			failif(err, "decoding %s", name)
-			yield(v)
+			if !yield(v) {
+				break
+			}
 		}
 	}
 }

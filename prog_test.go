@@ -87,25 +87,32 @@ func TestFS(t *testing.T) {
 func TestDry(t *testing.T) {
 	const q = `snapshot("\(.).json"; [.])`
 	p := Program{}
-	files := func() string {
+	ls := func() string {
 		rt := must(fs.Glob(p.FS, "*"))
 		return strings.Join(rt, " ")
+	}
+	cat := func(filename string) string {
+		data, err := fs.ReadFile(p.FS, filename)
+		if err != nil {
+			return "error"
+		}
+		return string(data)
 	}
 
 	for range 3 {
 		p.Args = []string{"--dry-run", q}
 		testRun(t, `false`, `false false.json`, &p)
-		assertEqual(t, files(), "")
-		assertEqual(t, fileText(p.FS, "false.json"), "error")
+		assertEqual(t, ls(), "")
+		assertEqual(t, cat("false.json"), "error")
 
 		p.Args = []string{q}
 		testRun(t, `false`, `false`, &p)
-		assertEqual(t, files(), "false.json")
-		assertEqual(t, fileText(p.FS, "false.json"), "[false]")
+		assertEqual(t, ls(), "false.json")
+		assertEqual(t, cat("false.json"), "[false]")
 
 		p.Args = []string{"-t", q}
 		testRun(t, `false`, `false`, &p)
-		assertEqual(t, files(), "false.json")
-		assertEqual(t, fileText(p.FS, "false.json"), "[\n\tfalse\n]")
+		assertEqual(t, ls(), "false.json")
+		assertEqual(t, cat("false.json"), "[\n\tfalse\n]")
 	}
 }

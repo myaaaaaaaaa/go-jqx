@@ -62,9 +62,9 @@ type flags struct {
 func (f *flags) populate(args []string) {
 	fset := flag.NewFlagSet("", flag.ExitOnError)
 	fset.BoolVar(&f.dry, "dry-run", false, `don't persist snapshots`)
-	fset.BoolVar(&f.tab, "t", false, `always indent output`)
-	fset.BoolVar(&f.rawIn, "r", false, `inputs are newline-separated strings`)
-	fset.BoolVar(&f.jsonOut, "j", false, `always output json (strings are unwrapped by default)`)
+	fset.BoolVar(&f.tab, "t", false, `(tab) always indent output`)
+	fset.BoolVar(&f.rawIn, "r", false, `(raw) inputs are newline-separated strings`)
+	fset.BoolVar(&f.jsonOut, "j", false, `(json) always output json (strings are unwrapped by default)`)
 
 	usage := fset.Usage
 	fset.Usage = func() {
@@ -75,7 +75,7 @@ func (f *flags) populate(args []string) {
 		if info != nil {
 			fmt.Fprintln(out)
 			fmt.Fprintln(out, "jqx", info.Main.Version, "built with", info.GoVersion)
-			fmt.Fprintf(out, "Update: go install %s@latest\n\n", info.Path)
+			fmt.Fprintf(out, "\n\tgo install %s@latest\n\n", info.Path)
 		}
 	}
 

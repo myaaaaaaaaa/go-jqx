@@ -53,16 +53,18 @@ type flags struct {
 	script    string
 	filenames []string
 
-	tab bool
-	raw bool
-	dry bool
+	dry     bool
+	tab     bool
+	rawIn   bool
+	jsonOut bool
 }
 
 func (f *flags) populate(args []string) {
 	fset := flag.NewFlagSet("", flag.ExitOnError)
-	fset.BoolVar(&f.tab, "t", false, `always indent output`)
-	fset.BoolVar(&f.raw, "r", false, `stdin, stdout, and files are newline-separated strings`)
 	fset.BoolVar(&f.dry, "dry-run", false, `don't persist snapshots`)
+	fset.BoolVar(&f.tab, "t", false, `always indent output`)
+	fset.BoolVar(&f.rawIn, "r", false, `inputs are newline-separated strings`)
+	fset.BoolVar(&f.jsonOut, "j", false, `always output json (strings are unwrapped by default)`)
 
 	usage := fset.Usage
 	fset.Usage = func() {
@@ -98,22 +100,22 @@ func (p *Program) Main() (rtErr error) {
 		failif(err, "loading")
 		defer file.Close()
 
-		v := slices.Collect(decoder(file, filename, f.raw))
-		if len(v) == 1 && !f.raw {
+		v := slices.Collect(decoder(file, filename, f.rawIn))
+		if len(v) == 1 && !f.rawIn {
 			files[filename] = v[0]
 		} else {
 			files[filename] = v
 		}
 	}
 
-	input := decoder(p.Stdin, "stdin", f.raw)
+	input := decoder(p.Stdin, "stdin", f.rawIn)
 	if p.StdinIsTerminal {
 		input = func(yield func(any) bool) { yield(files) }
 	}
 
 	marshal := getMarshaler(
-		f.tab || (p.StdoutIsTerminal && !f.raw),
-		f.raw || p.StdoutIsTerminal,
+		f.tab || (p.StdoutIsTerminal && !f.jsonOut),
+		!f.jsonOut,
 	)
 
 	var state State
@@ -131,7 +133,7 @@ func (p *Program) Main() (rtErr error) {
 		}
 		state.Files = nil
 	}
-	p.FS = toFS(state.Files, getMarshaler(f.tab, true)) // f.raw))
+	p.FS = toFS(state.Files, getMarshaler(f.tab, !f.jsonOut))
 
 	return nil
 }

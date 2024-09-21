@@ -34,11 +34,15 @@ func TestProgram(t *testing.T) {
 	testRun(t, "[]  []", "{}", &Program{StdinIsTerminal: true})
 
 	testRun(t, "[10]", "[10]", &Program{})
+	testRun(t, "[10]", "[10]", &Program{Args: []string{"-j"}})
+	testRun(t, "[10]", "[10]", &Program{Args: []string{"-j"}, StdoutIsTerminal: true})
 	testRun(t, "[10]", "[\n\t10\n]", &Program{StdoutIsTerminal: true})
 	testRun(t, "[10]", "[\n\t10\n]", &Program{Args: []string{"-t"}})
+	testRun(t, "[10]", "[\n\t10\n]", &Program{Args: []string{"-t", "-j"}})
 
-	testRun(t, `"a"`, `"a"`, &Program{})
+	testRun(t, `"a"`, `a`, &Program{})
 	testRun(t, `"a"`, `a`, &Program{StdoutIsTerminal: true})
+	testRun(t, `"a"`, `"a"`, &Program{Args: []string{"-j"}})
 
 	testRun(t, "[10]", "[10]", &Program{})
 	testRun(t, "[10]", "[10]", &Program{Args: []string{"."}})

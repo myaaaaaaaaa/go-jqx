@@ -79,10 +79,8 @@ func TestFS(t *testing.T) {
 		testRun(t, "", "error", &p)
 	}
 
-	p.Args = []string{"-r", ".[][] | .+.", "d.txt"}
-	testRun(t, "", "foofoo", &p)
-	p.Args = []string{"-r", ".[][] | .+.", "e.txt"}
-	testRun(t, "", "qq ww ee rr tt yy", &p)
+	p.Args = []string{"-r", ".[][] | .+.", "d.txt", "e.txt"}
+	testRun(t, "", "foofoo qq ww ee rr tt yy", &p)
 }
 func TestDry(t *testing.T) {
 	const q = `snapshot("\(.).json"; [.])`

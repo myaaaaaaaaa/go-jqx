@@ -101,7 +101,7 @@ func (p *Program) Main() (rtErr error) {
 	f.populate(p.Args)
 
 	files := map[string]any{}
-	for _, filename := range f.filenames {
+	slices.Values(f.filenames)(func(filename string) bool {
 		file, err := p.Open(filename)
 		failif(err, "loading")
 		defer file.Close()
@@ -112,7 +112,9 @@ func (p *Program) Main() (rtErr error) {
 		} else {
 			files[filename] = v
 		}
-	}
+
+		return true
+	})
 
 	input := decoder(p.Stdin, "stdin", f.rawIn)
 	if p.StdinIsTerminal {

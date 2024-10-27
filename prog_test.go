@@ -51,6 +51,10 @@ func TestProgram(t *testing.T) {
 
 	testRun(t, `] })`, `] })`, &Program{Args: []string{"-r"}})
 	testRun(t, `] })`, `] [1] }) [2]`, &Program{Args: []string{"-r", "., [length]"}})
+
+	t.Setenv("XYZ", "_____")
+	testRun(t, `"XYZ"`, "_____", &Program{Args: []string{"-e", "$env[.]"}})
+	testRun(t, `"XYZ"`, "error", &Program{Args: []string{"$env[.]"}})
 }
 func TestFS(t *testing.T) {
 	testFiles := map[string]any{

@@ -9,8 +9,10 @@ import (
 	"io/fs"
 	"iter"
 	"maps"
+	"os"
 	"runtime/debug"
 	"slices"
+	"strings"
 )
 
 func decoder(r io.Reader, name string, raw bool) iter.Seq[any] {
@@ -63,6 +65,7 @@ type flags struct {
 	tab     bool
 	rawIn   bool
 	jsonOut bool
+	env     bool
 }
 
 func (f *flags) populate(args []string) {
@@ -71,6 +74,7 @@ func (f *flags) populate(args []string) {
 	fset.BoolVar(&f.tab, "t", false, `(tab) always indent output`)
 	fset.BoolVar(&f.rawIn, "r", false, `(raw) inputs are newline-separated strings`)
 	fset.BoolVar(&f.jsonOut, "j", false, `(json) always output json (strings are unwrapped by default)`)
+	fset.BoolVar(&f.env, "e", false, `(env) enable $env`)
 
 	usage := fset.Usage
 	fset.Usage = func() {
@@ -128,6 +132,14 @@ func (p *Program) Main() (rtErr error) {
 
 	state := State{
 		Globals: map[string]any{"$files": files},
+	}
+	if f.env {
+		envVars := map[string]any{}
+		for _, v := range os.Environ() {
+			k, v, _ := strings.Cut(v, "=")
+			envVars[k] = v
+		}
+		state.Globals["$env"] = envVars
 	}
 	query := state.Compile(constString(f.script))
 	for v := range input {

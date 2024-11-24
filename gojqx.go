@@ -33,10 +33,11 @@ func (s *State) Compile(code constString) FanOut {
 	failif(err, "parsing query")
 
 	globalKeys := slices.Sorted(maps.Keys(s.Globals))
-	var globalValues []any
-	for _, globalKey := range globalKeys {
-		globalValues = append(globalValues, s.Globals[globalKey])
-	}
+	globalValues := slices.Collect(func(yield func(any) bool) {
+		for _, globalKey := range globalKeys {
+			yield(s.Globals[globalKey])
+		}
+	})
 
 	compiled, err := gojq.Compile(
 		parsed,

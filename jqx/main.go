@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 
 	"github.com/myaaaaaaaaa/go-jqx"
 )
@@ -22,6 +23,12 @@ func try(err error) {
 		os.Exit(5)
 	}
 }
+func must[T any](val T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return val
+}
 
 func main() {
 	prog := jqx.Program{
@@ -34,6 +41,18 @@ func main() {
 
 		StdinIsTerminal:  isTerminal(os.Stdin),
 		StdoutIsTerminal: isTerminal(os.Stdout),
+	}
+
+	if prog.StdoutIsTerminal {
+		cmd := exec.Command("less", "-S")
+		pipe := must(cmd.StdinPipe())
+		cmd.Stdout = os.Stdout
+		prog.Stdout = pipe
+
+		try(cmd.Start())
+
+		defer cmd.Wait()
+		defer pipe.Close()
 	}
 
 	try(prog.Main())

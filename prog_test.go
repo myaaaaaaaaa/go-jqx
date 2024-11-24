@@ -90,11 +90,11 @@ func TestDry(t *testing.T) {
 	const q = `snapshot("\(.).json"; [.])`
 	p := Program{}
 	ls := func() string {
-		rt := must(fs.Glob(p.FS, "*"))
+		rt := must(fs.Glob(p.OutFS, "*"))
 		return strings.Join(rt, " ")
 	}
 	cat := func(filename string) string {
-		data, err := fs.ReadFile(p.FS, filename)
+		data, err := fs.ReadFile(p.OutFS, filename)
 		if err != nil {
 			return "error"
 		}

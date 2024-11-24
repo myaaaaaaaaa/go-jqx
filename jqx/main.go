@@ -56,5 +56,5 @@ func main() {
 	}
 
 	try(prog.Main())
-	try(os.CopyFS(".", prog.FS))
+	try(os.CopyFS(".", prog.OutFS))
 }

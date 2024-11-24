@@ -3,8 +3,10 @@ package jqx
 import (
 	"bytes"
 	"io/fs"
+	"slices"
 	"strings"
 	"testing"
+	"testing/fstest"
 )
 
 func testRun(t *testing.T, stdin, want string, p *Program) {
@@ -56,7 +58,7 @@ func TestProgram(t *testing.T) {
 	testRun(t, `"XYZ"`, "_____", &Program{Args: []string{"-e", "$env[.]"}})
 	testRun(t, `"XYZ"`, "error", &Program{Args: []string{"$env[.]"}})
 }
-func TestFS(t *testing.T) {
+func TestOpen(t *testing.T) {
 	testFiles := map[string]any{
 		"a.json":    "[1][2][3]",
 		"b.json":    "[1,2,3]",
@@ -86,6 +88,27 @@ func TestFS(t *testing.T) {
 	p.Args = []string{"-r", ".[][] | .+.", "d.txt", "e.txt"}
 	testRun(t, "", "foofoo qq ww ee rr tt yy", &p)
 }
+
+func TestFS(t *testing.T) {
+	testfs := fstest.MapFS{
+		"x/d":      &fstest.MapFile{Mode: fs.ModeDir},
+		"x/dd/a/d": &fstest.MapFile{Mode: fs.ModeDir},
+		"x/f":      &fstest.MapFile{Data: []byte("file")},
+		"x/ff/a/f": &fstest.MapFile{Data: []byte("file")},
+	}
+
+	p := Program{StdinIsTerminal: true}
+	p.Find = func(s string) fs.FS {
+		return must(fs.Sub(testfs, s))
+	}
+
+	p.Args = []string{`$find | keys[]`}
+	testRun(t, "", "error", &p)
+
+	p.Args = slices.Insert(p.Args, 0, "-find", "x")
+	testRun(t, "", "d/ dd/ dd/a/ dd/a/d/ f ff/ ff/a/ ff/a/f", &p)
+}
+
 func TestDry(t *testing.T) {
 	const q = `snapshot("\(.).json"; [.])`
 	p := Program{}

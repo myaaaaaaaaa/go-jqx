@@ -35,6 +35,7 @@ func main() {
 		Args: os.Args[1:],
 
 		Open: func(f string) (fs.File, error) { return os.Open(f) },
+		Find: os.DirFS,
 
 		Stdin:  os.Stdin,
 		Stdout: os.Stdout,

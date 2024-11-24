@@ -49,6 +49,7 @@ type Program struct {
 	Args []string
 
 	Open  func(string) (fs.File, error)
+	Find  func(string) fs.FS
 	OutFS fs.FS
 
 	Stdin  io.Reader
@@ -66,6 +67,8 @@ type flags struct {
 	rawIn   bool
 	jsonOut bool
 	env     bool
+
+	find string
 }
 
 func (f *flags) populate(args []string) {
@@ -75,6 +78,8 @@ func (f *flags) populate(args []string) {
 	fset.BoolVar(&f.rawIn, "r", false, `(raw) inputs are newline-separated strings`)
 	fset.BoolVar(&f.jsonOut, "j", false, `(json) always output json (strings are unwrapped by default)`)
 	fset.BoolVar(&f.env, "e", false, `(env) enable $env`)
+
+	fset.StringVar(&f.find, "find", "", `enable $find`)
 
 	usage := fset.Usage
 	fset.Usage = func() {
@@ -140,6 +145,22 @@ func (p *Program) Main() (rtErr error) {
 			envVars[k] = v
 		}
 		state.Globals["$env"] = envVars
+	}
+	if f.find != "" {
+		find := map[string]any{}
+		err := fs.WalkDir(p.Find(f.find), ".", func(path string, d fs.DirEntry, err error) error {
+			if path == "." {
+				return err
+			}
+
+			if d.IsDir() {
+				path = path + "/"
+			}
+			find[path] = true
+			return err
+		})
+		failif(err, "finding subdirs")
+		state.Globals["$find"] = find
 	}
 	query := state.Compile(constString(f.script))
 	for v := range input {

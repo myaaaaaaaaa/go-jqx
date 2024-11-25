@@ -50,12 +50,14 @@ func main() {
 		cmd := exec.Command("less", "-SF")
 		pipe := must(cmd.StdinPipe())
 		cmd.Stdout = os.Stdout
-		prog.Stdout = pipe
 
-		try(cmd.Start())
-
-		defer cmd.Wait()
-		defer pipe.Close()
+		if err := cmd.Start(); err != nil {
+			defer fmt.Fprintf(os.Stderr, "warning: failed to pipe output to less: %v\n", err)
+		} else {
+			prog.Stdout = pipe
+			defer cmd.Wait()
+			defer pipe.Close()
+		}
 	}
 
 	try(prog.Main())

@@ -44,7 +44,9 @@ func main() {
 		StdoutIsTerminal: isTerminal(os.Stdout),
 	}
 
-	if prog.StdoutIsTerminal {
+	if prog.StdinIsTerminal && prog.StdoutIsTerminal && len(prog.Args) == 0 {
+		prog.Args = []string{"-h"}
+	} else if prog.StdoutIsTerminal {
 		cmd := exec.Command("less", "-S")
 		pipe := must(cmd.StdinPipe())
 		cmd.Stdout = os.Stdout

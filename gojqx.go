@@ -32,12 +32,19 @@ func (s *State) Compile(code constString) FanOut {
 	parsed, err := gojq.Parse(string(code))
 	failif(err, "parsing query")
 
-	globalKeys := slices.Sorted(maps.Keys(s.Globals))
-	globalValues := slices.Collect(func(yield func(any) bool) {
-		for _, globalKey := range globalKeys {
-			yield(s.Globals[globalKey])
+	globalKeys := slices.Sorted(func(yield func(string) bool) {
+		for key := range maps.Keys(s.Globals) {
+			yield("$" + key)
 		}
 	})
+	globalValues := slices.Collect(func(yield func(any) bool) {
+		for _, globalKey := range globalKeys {
+			yield(s.Globals[globalKey[1:]])
+		}
+	})
+
+	globalKeys = append(globalKeys, "$vars")
+	globalValues = append(globalValues, s.Globals)
 
 	compiled, err := gojq.Compile(
 		parsed,

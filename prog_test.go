@@ -54,8 +54,12 @@ func TestProgram(t *testing.T) {
 	testRun(t, `] })`, `] })`, &Program{Args: []string{"-r"}})
 	testRun(t, `] })`, `] [1] }) [2]`, &Program{Args: []string{"-r", "., [length]"}})
 
+	testRun(t, `null`, "env files", &Program{Args: []string{"-e", "$vars | keys[]"}})
+	testRun(t, `null`, "files", &Program{Args: []string{"$vars | keys[]"}})
+
 	t.Setenv("XYZ", "_____")
 	testRun(t, `"XYZ"`, "_____", &Program{Args: []string{"-e", "$env[.]"}})
+	testRun(t, `"XYZ"`, "_____", &Program{Args: []string{"-e", "$vars.env[.]"}})
 	testRun(t, `"XYZ"`, "error", &Program{Args: []string{"$env[.]"}})
 }
 func TestOpen(t *testing.T) {

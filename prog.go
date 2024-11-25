@@ -136,7 +136,7 @@ func (p *Program) Main() (rtErr error) {
 	)
 
 	state := State{
-		Globals: map[string]any{"$files": files},
+		Globals: map[string]any{"files": files},
 	}
 	if f.env {
 		envVars := map[string]any{}
@@ -144,7 +144,7 @@ func (p *Program) Main() (rtErr error) {
 			k, v, _ := strings.Cut(v, "=")
 			envVars[k] = v
 		}
-		state.Globals["$env"] = envVars
+		state.Globals["env"] = envVars
 	}
 	if f.find != "" {
 		find := map[string]any{}
@@ -160,7 +160,7 @@ func (p *Program) Main() (rtErr error) {
 			return err
 		})
 		failif(err, "finding subdirs")
-		state.Globals["$find"] = find
+		state.Globals["find"] = find
 	}
 	query := state.Compile(constString(f.script))
 	for v := range input {

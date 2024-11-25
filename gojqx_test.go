@@ -48,8 +48,8 @@ func TestState(t *testing.T) {
 	assertEqual(t, len(state.Files), 4)
 
 	state = State{Globals: map[string]any{
-		"$k": keys,
-		"$v": state.Files,
+		"k": keys,
+		"v": state.Files,
 	}}
 	query = state.Compile(`[$k[],$v[] | tostring] | join(" ")`)
 

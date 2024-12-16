@@ -55,3 +55,18 @@ func TestState(t *testing.T) {
 	got := slices.Collect(query(nil))
 	assertString(t, got, `[aa cc qq rr aaaa [3,3] {"e":10} 10]`)
 }
+
+func TestHash(t *testing.T) {
+	query := new(State).Compile(`md5`)
+
+	assertString(t, slices.Collect(query("")), `[d41d8cd98f00b204e9800998ecf8427e]`)
+	assertString(t, slices.Collect(query("\n")), `[68b329da9893e34099c7d8ad5cb9c940]`)
+	assertString(t, slices.Collect(query("hi")), `[49f68a5c8493ec2c0bf489821c21fc3b]`)
+}
+func TestShuffle(t *testing.T) {
+	query := new(State).Compile(`range(4) | [range(.)] | [shuffle(range(30))|join("")] | unique | join("-")`)
+	assertString(t, slices.Collect(query(nil)), `[ 0 01-10 012-021-102-120-201-210]`)
+
+	query = new(State).Compile(`def seq(f): range(4) | [range(.)] | [shuffle(range(30)|f)]; seq(.),seq(5) | unique | length`)
+	assertString(t, slices.Collect(query(nil)), `[1 1 2 6 1 1 1 1]`)
+}

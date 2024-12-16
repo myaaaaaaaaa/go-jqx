@@ -9,8 +9,7 @@ func TestCompile(t *testing.T) {
 	query := new(State).Compile(`range(.)*2+1 | tostring`)
 	got := slices.Collect(query(3))
 
-	assertEqual(t, len(got), 3)
-	assertEqual(t, [3]any(got), [...]any{"1", "3", "5"})
+	assertString(t, got, `[1 3 5]`)
 
 	i := 0
 	for v := range query(100) {
@@ -51,9 +50,8 @@ func TestState(t *testing.T) {
 		"k": keys,
 		"v": state.Files,
 	}}
-	query = state.Compile(`[$k[],$v[] | tostring] | join(" ")`)
+	query = state.Compile(`$k[],$v[] | tostring`)
 
 	got := slices.Collect(query(nil))
-	assertEqual(t, len(got), 1)
-	assertEqual(t, got[0], `aa cc qq rr aaaa [3,3] {"e":10} 10`)
+	assertString(t, got, `[aa cc qq rr aaaa [3,3] {"e":10} 10]`)
 }

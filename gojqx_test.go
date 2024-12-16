@@ -1,6 +1,7 @@
 package jqx
 
 import (
+	"math"
 	"slices"
 	"testing"
 )
@@ -69,4 +70,38 @@ func TestShuffle(t *testing.T) {
 
 	query = new(State).Compile(`def seq(f): range(4) | [range(.)] | [shuffle(range(30)|f)]; seq(.),seq(5) | unique | length`)
 	assertString(t, slices.Collect(query(nil)), `[1 1 2 6 1 1 1 1]`)
+}
+func BenchmarkShuffle(b *testing.B) {
+	lists := []string{
+		`[1,2]`,
+		`[1,2,3]`,
+	}
+
+	for _, list := range lists {
+		b.Run(list, func(b *testing.B) {
+			query := new(State).Compile(`
+				def fac($n): if $n==0 then 1 else $n*fac($n-1) end;
+				. as $n | ` + constString(list) + `
+				| reduce shuffle(range($n*fac(length))) as $perm (
+					{};
+					.[$perm|join("")] |= .+1
+				)
+			`)
+
+			ss := slices.Collect(query(b.N))
+			if len(ss) != 1 {
+				panic(len(ss))
+			}
+
+			buckets := ss[0].(map[string]any)
+			for k, v := range buckets {
+				v := float64(v.(int))
+				b.ReportMetric(v, k)
+				v /= float64(b.N)
+				v -= 1
+				v *= 100
+				b.ReportMetric(math.Abs(v), "%-err-"+k)
+			}
+		})
+	}
 }

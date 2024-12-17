@@ -52,8 +52,8 @@ type Program struct {
 	Find  func(string) fs.FS
 	OutFS fs.FS
 
-	Stdin  io.Reader
-	Stdout io.Writer
+	Stdin   io.Reader
+	Println func(string)
 
 	StdinIsTerminal  bool
 	StdoutIsTerminal bool
@@ -166,13 +166,13 @@ func (p *Program) Main() (rtErr error) {
 	for v := range input {
 		for v := range query(v) {
 			v := must(marshal(v))
-			fmt.Fprintln(p.Stdout, string(v))
+			p.Println(string(v))
 		}
 	}
 
 	if f.dry {
 		for _, file := range slices.Sorted(maps.Keys(state.Files)) {
-			fmt.Fprintln(p.Stdout, file)
+			p.Println(file)
 		}
 		state.Files = nil
 	}

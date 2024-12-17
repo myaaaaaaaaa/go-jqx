@@ -2,6 +2,7 @@ package jqx
 
 import (
 	"bytes"
+	"fmt"
 	"io/fs"
 	"slices"
 	"strings"
@@ -15,7 +16,7 @@ func testRun(t *testing.T, stdin, want string, p *Program) {
 	var got bytes.Buffer
 
 	p.Stdin = bytes.NewBufferString(strings.ReplaceAll(stdin, " ", "\n"))
-	p.Stdout = &got
+	p.Println = func(s string) { fmt.Fprintln(&got, s) }
 
 	err := p.Main()
 	if err != nil {

@@ -5,11 +5,11 @@ import (
 	"testing"
 )
 
-func assertEqual[T comparable](t *testing.T, got T, want T) {
-	t.Helper()
+func assertEqual[T comparable](tb testing.TB, got T, want T) {
+	tb.Helper()
 	if got != want {
-		t.Error("got", got)
-		t.Error("want", want)
+		tb.Error("got", got)
+		tb.Error("want", want)
 	}
 }
 func assertString(t *testing.T, got any, want string) {

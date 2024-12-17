@@ -89,9 +89,7 @@ func BenchmarkShuffle(b *testing.B) {
 			`)
 
 			ss := slices.Collect(query(b.N))
-			if len(ss) != 1 {
-				panic(len(ss))
-			}
+			assertEqual(b, len(ss), 1)
 
 			buckets := ss[0].(map[string]any)
 			for k, v := range buckets {

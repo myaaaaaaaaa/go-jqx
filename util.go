@@ -37,25 +37,27 @@ func catch[T error](rt *error) {
 	}
 }
 
-func getMarshaler(tab bool, str bool) func(v any) ([]byte, error) {
-	f := json.Marshal
+func getMarshaler(tab bool, str bool) func(v any) []byte {
+	f := func(v any) []byte {
+		return must(json.Marshal(v))
+	}
 	if tab {
-		f = func(v any) ([]byte, error) {
-			return json.MarshalIndent(v, "", "\t")
+		f = func(v any) []byte {
+			return must(json.MarshalIndent(v, "", "\t"))
 		}
 	}
 	if str {
 		oldf := f
-		f = func(v any) ([]byte, error) {
+		f = func(v any) []byte {
 			if v, ok := v.(string); ok {
-				return []byte(v), nil
+				return []byte(v)
 			}
 			return oldf(v)
 		}
 	}
 	return f
 }
-func toFS(m map[string]any, marshaler func(any) ([]byte, error)) fs.FS {
+func toFS(m map[string]any, marshaler func(any) []byte) fs.FS {
 	if marshaler == nil {
 		marshaler = getMarshaler(false, true)
 	}
@@ -63,7 +65,7 @@ func toFS(m map[string]any, marshaler func(any) ([]byte, error)) fs.FS {
 	rt := fstest.MapFS{}
 
 	for k, v := range m {
-		rt[k] = &fstest.MapFile{Data: must(marshaler(v))}
+		rt[k] = &fstest.MapFile{Data: marshaler(v)}
 	}
 
 	return rt

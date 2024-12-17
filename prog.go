@@ -165,7 +165,7 @@ func (p *Program) Main() (rtErr error) {
 	query := state.Compile(constString(f.script))
 	for v := range input {
 		for v := range query(v) {
-			v := must(marshal(v))
+			v := marshal(v)
 			p.Println(string(v))
 		}
 	}

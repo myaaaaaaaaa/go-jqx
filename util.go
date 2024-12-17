@@ -38,24 +38,18 @@ func catch[T error](rt *error) {
 }
 
 func getMarshaler(tab bool, str bool) func(v any) []byte {
-	f := func(v any) []byte {
-		return must(json.Marshal(v))
-	}
-	if tab {
-		f = func(v any) []byte {
-			return must(json.MarshalIndent(v, "", "\t"))
-		}
-	}
-	if str {
-		oldf := f
-		f = func(v any) []byte {
+	return func(v any) []byte {
+		if str {
 			if v, ok := v.(string); ok {
 				return []byte(v)
 			}
-			return oldf(v)
 		}
+
+		if tab {
+			return must(json.MarshalIndent(v, "", "\t"))
+		}
+		return must(json.Marshal(v))
 	}
-	return f
 }
 func toFS(m map[string]any, marshaler func(any) []byte) fs.FS {
 	if marshaler == nil {

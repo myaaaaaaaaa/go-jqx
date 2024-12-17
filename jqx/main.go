@@ -58,7 +58,14 @@ func main() {
 			defer fmt.Fprintf(os.Stderr, "warning: failed to pipe output to less: %v\n", err)
 		} else {
 			prog.Println = func(s string) {
-				must(0, quick.Highlight(pipe, s+"\n", "json", "terminal256", "github"))
+				if s != "" {
+					switch s[:1] + s[len(s)-1:] {
+					case `{}`, `[]`, `""`:
+						must(0, quick.Highlight(pipe, s+"\n", "json", "terminal256", "github"))
+						return
+					}
+				}
+				fmt.Fprintln(pipe, s)
 			}
 			defer cmd.Wait()
 			defer pipe.Close()

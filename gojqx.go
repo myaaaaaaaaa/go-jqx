@@ -2,8 +2,12 @@ package jqx
 
 import (
 	"crypto/md5"
+	"crypto/sha1"
+	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
+	"hash"
 	"iter"
 	"maps"
 	"math/rand/v2"
@@ -35,7 +39,7 @@ func (s *State) snapshot(input any, kv []any) (rt any) {
 
 	return
 }
-func jshuffle(input any, seed []any) any {
+func shuffle(input any, seed []any) any {
 	s := fmt.Sprint(seed[0])
 	r := rand.PCG{}
 	r.Seed(0x701877fa59de0c16, 0x99f94bdb8143b770)
@@ -51,9 +55,12 @@ func jshuffle(input any, seed []any) any {
 	})
 	return rt
 }
-func jmd5(input any, _ []any) any {
-	hash := md5.Sum([]byte(input.(string)))
-	return hex.EncodeToString(hash[:])
+func hasher(f func() hash.Hash) func(any, []any) any {
+	return func(input any, _ []any) any {
+		h := f()
+		h.Write([]byte(input.(string)))
+		return hex.EncodeToString(h.Sum(nil))
+	}
 }
 
 func (s *State) Compile(code constString) FanOut {
@@ -80,8 +87,11 @@ func (s *State) Compile(code constString) FanOut {
 	compiled, err := gojq.Compile(
 		parsed,
 		gojq.WithFunction("snapshot", 2, 2, s.snapshot),
-		gojq.WithFunction("shuffle", 1, 1, jshuffle),
-		gojq.WithFunction("md5", 0, 0, jmd5),
+		gojq.WithFunction("shuffle", 1, 1, shuffle),
+		gojq.WithFunction("md5", 0, 0, hasher(md5.New)),
+		gojq.WithFunction("sha1", 0, 0, hasher(sha1.New)),
+		gojq.WithFunction("sha256", 0, 0, hasher(sha256.New)),
+		gojq.WithFunction("sha512", 0, 0, hasher(sha512.New)),
 		gojq.WithVariables(globalKeys),
 	)
 	failif(err, "compiling query")

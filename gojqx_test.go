@@ -59,10 +59,22 @@ func TestState(t *testing.T) {
 
 func TestHash(t *testing.T) {
 	query := new(State).Compile(`md5`)
-
 	assertString(t, slices.Collect(query("")), `[d41d8cd98f00b204e9800998ecf8427e]`)
 	assertString(t, slices.Collect(query("\n")), `[68b329da9893e34099c7d8ad5cb9c940]`)
 	assertString(t, slices.Collect(query("hi")), `[49f68a5c8493ec2c0bf489821c21fc3b]`)
+
+	query = new(State).Compile(`sha1`)
+	assertString(t, slices.Collect(query("")), `[da39a3ee5e6b4b0d3255bfef95601890afd80709]`)
+	assertString(t, slices.Collect(query("\n")), `[adc83b19e793491b1c6ea0fd8b46cd9f32e592fc]`)
+	assertString(t, slices.Collect(query("hi")), `[c22b5f9178342609428d6f51b2c5af4c0bde6a42]`)
+	query = new(State).Compile(`sha256`)
+	assertString(t, slices.Collect(query("")), `[e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855]`)
+	assertString(t, slices.Collect(query("\n")), `[01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b]`)
+	assertString(t, slices.Collect(query("hi")), `[8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4]`)
+	query = new(State).Compile(`sha512`)
+	assertString(t, slices.Collect(query("")), `[cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e]`)
+	assertString(t, slices.Collect(query("\n")), `[be688838ca8686e5c90689bf2ab585cef1137c999b48c70b92f67a5c34dc15697b5d11c982ed6d71be1e1e7f7b4e0733884aa97c3f7a339a8ed03577cf74be09]`)
+	assertString(t, slices.Collect(query("hi")), `[150a14ed5bea6cc731cf86c41566ac427a8db48ef1b9fd626664b3bfbb99071fa4c922f33dde38719b8c8354e2b7ab9d77e0e67fc12843920a712e73d558e197]`)
 }
 func TestShuffle(t *testing.T) {
 	query := new(State).Compile(`range(4) | [range(.)] | [shuffle(range(30))|join("")] | unique | join("-")`)

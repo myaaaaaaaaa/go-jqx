@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/cursor"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -102,6 +103,7 @@ func newModel(text string) model {
 	rt.textarea.SetHeight(3)
 	rt.textarea.Placeholder = "jq..."
 	rt.textarea.Focus()
+	rt.textarea.Cursor.SetMode(cursor.CursorStatic)
 
 	return rt
 }

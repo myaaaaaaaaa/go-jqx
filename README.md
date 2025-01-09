@@ -2,6 +2,8 @@
 
 ```bash
 go install github.com/myaaaaaaaaa/go-jqx/jqx@latest
+```
+```bash
 go install github.com/myaaaaaaaaa/go-jqx/jqedit@latest
 ```
 

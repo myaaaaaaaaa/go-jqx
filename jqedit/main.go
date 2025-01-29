@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
@@ -104,6 +105,16 @@ func newModel(text string) model {
 	rt.textarea.Placeholder = "jq..."
 	rt.textarea.Focus()
 	rt.textarea.Cursor.SetMode(cursor.CursorStatic)
+
+	info, _ := debug.ReadBuildInfo()
+	if info != nil {
+		s := "    jqedit " + info.Main.Version + " built with " + info.GoVersion
+		s = lipgloss.NewStyle().
+			Italic(true).
+			Foreground(lipgloss.Color("#888888")).
+			Render(s)
+		fmt.Fprintln(os.Stderr, s)
+	}
 
 	return rt
 }

@@ -68,7 +68,6 @@ func (d data) query() (string, error) {
 type (
 	saveMsg struct{}
 	tabMsg  struct{}
-	tickMsg struct{}
 )
 type updateMsg struct {
 	m tea.Model
@@ -88,7 +87,6 @@ type model struct {
 	d data
 
 	err error
-	num int
 }
 
 func newModel(text string) model {
@@ -121,7 +119,6 @@ func newModel(text string) model {
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
 		textarea.Blink,
-		tick(),
 	)
 }
 
@@ -162,9 +159,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Printf("    saved to %s", tlink(fname, "file://"+outFile))
 		}
 
-		return m, nil
-	case tickMsg:
-		m.num++
 		return m, nil
 	case tabMsg:
 		m.d.compact = !m.d.compact
@@ -215,18 +209,10 @@ func (m model) View() string {
 		err = m.err.Error()
 	}
 
-	tock := "Tick"
-	if m.num%2 == 1 {
-		tock = "Tock"
-	}
-	tock = fmt.Sprint(tock, " #", m.num)
-
 	hr := subtleStyle.Render("────")
 	vr := subtleStyle.Render("│\n│")
 
 	mainView := lipgloss.JoinVertical(lipgloss.Center,
-		headerStyle.Render(tock),
-
 		hr,
 		lipgloss.JoinHorizontal(lipgloss.Center,
 			vr,
@@ -275,14 +261,6 @@ func isTerminal(f fs.File) bool {
 		return false
 	}
 	return stat.Mode()&fs.ModeCharDevice != 0
-}
-func tick() tea.Cmd {
-	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
-		return updateMsg{c: tea.Batch(
-			func() tea.Msg { return tickMsg{} },
-			tick(),
-		)}
-	})
 }
 
 var logged = map[string]bool{}

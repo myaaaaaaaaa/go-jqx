@@ -156,7 +156,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.err = os.WriteFile(outFile, []byte(m.vcontent), 0666)
 		if m.err == nil {
-			return m, tea.Printf("    saved to %s", tlink(fname, "file://"+outFile))
+			return m, tea.Printf("    saved to %s", tlink(outFile, "file://"+outFile))
 		}
 
 		return m, nil

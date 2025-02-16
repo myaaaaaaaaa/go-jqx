@@ -23,7 +23,7 @@ import (
 	"github.com/myaaaaaaaaa/go-jqx"
 )
 
-const sampleJSON = `{"a":5,"b":"c","d":["e","f"],"g":{"h":"i","j":"k"}}`
+const sampleJSON = `{"a":5,"b":"c","d":["e",true,-11.5,null,"f"],"g":{"h":"i","j":"k"},"l":null}`
 
 type data struct {
 	input   string

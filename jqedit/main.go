@@ -181,10 +181,10 @@ abortUpdate:
 }
 
 var (
-	errorStyle = lipgloss.NewStyle().
+	errorStyle = lipgloss.Style{}.
 			Bold(true).
 			Foreground(lipgloss.Color("#880000"))
-	subtleStyle = lipgloss.NewStyle().
+	subtleStyle = lipgloss.Style{}.
 			Foreground(lipgloss.Color("#cccccc"))
 )
 
@@ -215,11 +215,9 @@ func (m model) View() string {
 		"\n" + errorStyle.Render(err)
 }
 
-type emptyModel struct{}
+type emptyModel struct{ tea.Model }
 
-func (emptyModel) Init() tea.Cmd                         { return nil }
-func (e emptyModel) Update(tea.Msg) (tea.Model, tea.Cmd) { return e, nil }
-func (emptyModel) View() string                          { return "" }
+func (emptyModel) View() string { return "" }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers
@@ -267,13 +265,13 @@ func logScript(code string) tea.Cmd {
 	logged[code] = true
 	return tea.Printf("    %s", strings.ReplaceAll(code, `'`, `'\''`))
 }
-func msgFilter(_ tea.Model, msg tea.Msg) tea.Msg {
+func msgFilter(m tea.Model, msg tea.Msg) tea.Msg {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEsc, tea.KeyCtrlC, tea.KeyCtrlQ:
 			return updateMsg{
-				emptyModel{},
+				emptyModel{m},
 				tea.Quit,
 			}
 		case tea.KeyCtrlS:
@@ -284,6 +282,7 @@ func msgFilter(_ tea.Model, msg tea.Msg) tea.Msg {
 	}
 	return msg
 }
+
 func main() {
 	text := sampleJSON
 	if !isTerminal(os.Stdin) {
@@ -293,6 +292,8 @@ func main() {
 		}
 		text = string(b)
 	}
+
+	lipgloss.SetDefaultRenderer(lipgloss.NewRenderer(os.Stderr))
 
 	buildInfo, _ := debug.ReadBuildInfo()
 	if buildInfo != nil {
@@ -307,9 +308,16 @@ func main() {
 	p := tea.NewProgram(newModel(text),
 		tea.WithFilter(msgFilter),
 		tea.WithMouseCellMotion(),
+		tea.WithOutput(os.Stderr),
 	)
 
-	if _, err := p.Run(); err != nil {
+	m, err := p.Run()
+	if err != nil {
 		panic(err)
+	}
+
+	if !isTerminal(os.Stdout) {
+		m := m.(emptyModel).Model.(model)
+		os.Stdout.Write([]byte(m.vcontent))
 	}
 }

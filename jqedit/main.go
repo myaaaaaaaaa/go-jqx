@@ -191,9 +191,6 @@ abortUpdate:
 }
 
 var (
-	headerStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#4444cc"))
 	errorStyle = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(lipgloss.Color("#880000"))
@@ -230,9 +227,9 @@ func (m model) View() string {
 
 type emptyModel struct{}
 
-func (_ emptyModel) Init() tea.Cmd                         { return nil }
-func (e emptyModel) Update(_ tea.Msg) (tea.Model, tea.Cmd) { return e, nil }
-func (_ emptyModel) View() string                          { return "" }
+func (emptyModel) Init() tea.Cmd                         { return nil }
+func (e emptyModel) Update(tea.Msg) (tea.Model, tea.Cmd) { return e, nil }
+func (emptyModel) View() string                          { return "" }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers

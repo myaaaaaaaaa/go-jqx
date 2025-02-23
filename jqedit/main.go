@@ -104,16 +104,6 @@ func newModel(text string) model {
 	rt.textarea.Focus()
 	rt.textarea.Cursor.SetMode(cursor.CursorStatic)
 
-	info, _ := debug.ReadBuildInfo()
-	if info != nil {
-		s := "    jqedit " + info.Main.Version + " built with " + info.GoVersion
-		s = lipgloss.NewStyle().
-			Italic(true).
-			Foreground(lipgloss.Color("#888888")).
-			Render(s)
-		fmt.Fprintln(os.Stderr, s)
-	}
-
 	return rt
 }
 func (m model) Init() tea.Cmd {
@@ -302,6 +292,16 @@ func main() {
 			panic(err)
 		}
 		text = string(b)
+	}
+
+	buildInfo, _ := debug.ReadBuildInfo()
+	if buildInfo != nil {
+		s := "jqedit " + buildInfo.Main.Version + " built with " + buildInfo.GoVersion
+		s = lipgloss.NewStyle().
+			Italic(true).
+			Foreground(lipgloss.Color("#888888")).
+			Render(s)
+		fmt.Fprintln(os.Stderr, s)
 	}
 
 	p := tea.NewProgram(newModel(text),

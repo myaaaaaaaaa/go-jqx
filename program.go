@@ -15,20 +15,20 @@ import (
 	"strings"
 )
 
-func decoder(r io.Reader, name string, raw bool) iter.Seq[any] {
-	if raw {
-		return func(yield func(any) bool) {
-			scanner := bufio.NewScanner(r)
-			for scanner.Scan() {
-				if !yield(scanner.Text()) {
-					break
-				}
+func lines(r io.Reader, name string) iter.Seq[any] {
+	return func(yield func(any) bool) {
+		scanner := bufio.NewScanner(r)
+		for scanner.Scan() {
+			if !yield(scanner.Text()) {
+				break
 			}
-			err := scanner.Err()
-			failif(err, "scanning %s", name)
 		}
+		err := scanner.Err()
+		failif(err, "scanning %s", name)
 	}
+}
 
+func decoder(r io.Reader, name string) iter.Seq[any] {
 	return func(yield func(any) bool) {
 		decoder := json.NewDecoder(r)
 		for {
@@ -115,17 +115,30 @@ func (p *Program) Main() (rtErr error) {
 		failif(err, "loading")
 		defer file.Close()
 
-		v := slices.Collect(decoder(file, filename, f.rawIn))
-		if len(v) == 1 && !f.rawIn {
-			files[filename] = v[0]
+		var data any
+
+		if f.rawIn {
+			b, err := io.ReadAll(file)
+			failif(err, "reading")
+			data = string(b)
 		} else {
-			files[filename] = v
+			v := slices.Collect(decoder(file, filename))
+			if len(v) == 1 {
+				data = v[0]
+			} else {
+				data = v
+			}
 		}
+
+		files[filename] = data
 
 		return true
 	})
 
-	input := decoder(p.Stdin, "stdin", f.rawIn)
+	input := decoder(p.Stdin, "stdin")
+	if f.rawIn {
+		input = lines(p.Stdin, "stdin")
+	}
 	if p.StdinIsTerminal {
 		input = func(yield func(any) bool) { yield(files) }
 	}

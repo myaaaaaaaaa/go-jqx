@@ -90,8 +90,8 @@ func TestOpen(t *testing.T) {
 		testRun(t, "", "error", &p)
 	}
 
-	p.Args = []string{"-r", ".[][] | .+.", "d.txt", "e.txt"}
-	testRun(t, "", "foofoo qq ww ee rr tt yy", &p)
+	p.Args = []string{"-r", ".[]", "d.txt", "e.txt"}
+	testRun(t, "", "foo q w e r t y", &p)
 }
 
 func TestFS(t *testing.T) {

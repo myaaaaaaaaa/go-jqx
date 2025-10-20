@@ -49,4 +49,14 @@ func TestSelectHTML(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected an error for invalid selector '%s', but got nil", selector)
 	}
+
+	// Test case 5: Invalid HTML is parsed leniently
+	invalidHTML := `<html><body><p>Invalid HTML`
+	selector = "p"
+	expected = `<p>Invalid HTML</p>`
+	actual, err = selectHTML(invalidHTML, selector)
+	if err != nil {
+		t.Errorf("Unexpected error for invalid HTML: %v", err)
+	}
+	assertEqual(t, actual, expected)
 }

@@ -23,9 +23,7 @@ func TestSelectHTML(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error for selector '%s': %v", selector, err)
 	}
-	if actual != expected {
-		t.Errorf("Expected '%s', but got '%s'", expected, actual)
-	}
+	assertEqual(t, actual, expected)
 
 	// Test case 2: Select by tag
 	selector = "h1"
@@ -34,9 +32,7 @@ func TestSelectHTML(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error for selector '%s': %v", selector, err)
 	}
-	if actual != expected {
-		t.Errorf("Expected '%s', but got '%s'", expected, actual)
-	}
+	assertEqual(t, actual, expected)
 
 	// Test case 3: Select multiple elements
 	selector = "p"
@@ -45,9 +41,7 @@ func TestSelectHTML(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error for selector '%s': %v", selector, err)
 	}
-	if actual != expected {
-		t.Errorf("Expected '%s', but got '%s'", expected, actual)
-	}
+	assertEqual(t, actual, expected)
 
 	// Test case 4: Invalid selector
 	selector = "invalid["

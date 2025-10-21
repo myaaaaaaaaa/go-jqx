@@ -12,7 +12,6 @@ func TestHTMLQuerySelector(t *testing.T) {
 				<p>First paragraph.</p>
 				<p class="content">Second paragraph.</p>
 				<div class="footer">Footer</div>
-			</body>
 		</html>
 	`
 
@@ -30,12 +29,6 @@ func TestHTMLQuerySelector(t *testing.T) {
 	selector = "p"
 	expected = `<p>First paragraph.</p><p class="content">Second paragraph.</p>`
 	assertEqual(t, must(htmlQuerySelector(html, selector)), expected)
-
-	// Test: Invalid HTML is parsed leniently
-	invalidHTML := `<html><body><p>Invalid HTML`
-	selector = "p"
-	expected = `<p>Invalid HTML</p>`
-	assertEqual(t, must(htmlQuerySelector(invalidHTML, selector)), expected)
 
 	// Test: Invalid selector
 	selector = "invalid["

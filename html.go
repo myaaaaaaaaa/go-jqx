@@ -2,6 +2,8 @@ package jqx
 
 import (
 	"bytes"
+	"errors"
+	"io"
 	"strings"
 
 	"github.com/andybalholm/cascadia"
@@ -44,9 +46,16 @@ func htmlExtractText(htmlString string) (string, error) {
 		tokenType := tokenizer.Next()
 		switch tokenType {
 		case html.ErrorToken:
-			return sb.String(), nil
+			goto end
 		case html.TextToken:
 			sb.WriteString(tokenizer.Token().Data)
 		}
 	}
+
+end:
+	err := tokenizer.Err()
+	if errors.Is(err, io.EOF) {
+		err = nil
+	}
+	return sb.String(), err
 }

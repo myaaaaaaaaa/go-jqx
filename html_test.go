@@ -46,28 +46,33 @@ func TestHTMLQuerySelector(t *testing.T) {
 }
 
 func TestHtmlExtractText(t *testing.T) {
-	// Test case 1: Simple HTML
+	// Test: Simple HTML
 	html1 := `<html><body><p>Hello, world!</p></body></html>`
 	expected1 := "Hello, world!"
 	assertEqual(t, must(htmlExtractText(html1)), expected1)
 
-	// Test case 2: HTML with multiple text nodes
+	// Test: HTML with multiple text nodes
 	html2 := `<h1>Title</h1><p>First paragraph.</p><p>Second paragraph.</p>`
 	expected2 := "TitleFirst paragraph.Second paragraph."
 	assertEqual(t, must(htmlExtractText(html2)), expected2)
 
-	// Test case 3: HTML with no text
+	// Test: HTML with no text
 	html3 := `<div><img src="image.jpg"/></div>`
 	expected3 := ""
 	assertEqual(t, must(htmlExtractText(html3)), expected3)
 
-	// Test case 4: Empty string
+	// Test: Empty string
 	html4 := ""
 	expected4 := ""
 	assertEqual(t, must(htmlExtractText(html4)), expected4)
 
-	// Test case 5: HTML with comments
+	// Test: HTML with comments
 	html5 := `<!-- This is a comment --><body><p>Some text</p></body>`
 	expected5 := "Some text"
 	assertEqual(t, must(htmlExtractText(html5)), expected5)
+
+	// Test: Plain text
+	html6 := "Hello"
+	expected6 := "Hello"
+	assertEqual(t, must(htmlExtractText(html6)), expected6)
 }

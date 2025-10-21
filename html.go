@@ -48,7 +48,7 @@ func htmlExtractText(htmlString string) (string, error) {
 		case html.ErrorToken:
 			goto end
 		case html.TextToken:
-			sb.WriteString(tokenizer.Token().Data)
+			sb.Write(tokenizer.Text())
 		}
 	}
 

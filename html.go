@@ -8,7 +8,7 @@ import (
 	"golang.org/x/net/html"
 )
 
-func selectHTML(htmlText, cssSelector string) (string, error) {
+func htmlQuerySelector(htmlText, cssSelector string) (string, error) {
 	// Parse the CSS selector
 	sel, err := cascadia.Parse(cssSelector)
 	if err != nil {

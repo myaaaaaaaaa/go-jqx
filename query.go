@@ -65,7 +65,7 @@ func hasher(f func() hash.Hash) func(any, []any) any {
 
 func htmlq(input any, args []any) any {
 	selector := args[0]
-	rt, err := selectHTML(input.(string), selector.(string))
+	rt, err := htmlQuerySelector(input.(string), selector.(string))
 	if err != nil {
 		return err
 	}

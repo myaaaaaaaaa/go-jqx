@@ -75,4 +75,9 @@ func TestHtmlExtractText(t *testing.T) {
 	html6 := "Hello"
 	expected6 := "Hello"
 	assertEqual(t, must(htmlExtractText(html6)), expected6)
+
+	// Test: Alt text
+	html7 := `<p>Hello</p><img src="image.jpg" alt="olleh"/>`
+	expected7 := "Hello\n(img: olleh)\n"
+	assertEqual(t, must(htmlExtractText(html7)), expected7)
 }

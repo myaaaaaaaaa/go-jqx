@@ -3,6 +3,7 @@ package jqx
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 
@@ -49,6 +50,13 @@ func htmlExtractText(htmlString string) (string, error) {
 			goto end
 		case html.TextToken:
 			sb.Write(tokenizer.Text())
+		case html.StartTagToken, html.SelfClosingTagToken:
+			t := tokenizer.Token()
+			for _, attr := range t.Attr {
+				if attr.Key == "alt" {
+					sb.WriteString(fmt.Sprintf("\n(%s: %s)\n", t.Data, attr.Val))
+				}
+			}
 		}
 	}
 

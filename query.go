@@ -91,10 +91,7 @@ func htmlq(input any, args []any) any {
 	return rt
 }
 func htmlt(input any, _ []any) any {
-	rt, err := htmlExtractText(input.(string))
-	if err != nil {
-		return err
-	}
+	rt := htmlExtractText(input.(string))
 	return rt
 }
 

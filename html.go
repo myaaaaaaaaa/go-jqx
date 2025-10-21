@@ -31,7 +31,7 @@ func htmlQuerySelector(htmlText, cssSelector string) (string, error) {
 	return buffer.String(), nil
 }
 
-func htmlExtractText(htmlString string) (string, error) {
+func htmlExtractText(htmlString string) string {
 	tokenizer := html.NewTokenizer(strings.NewReader(htmlString))
 	var sb strings.Builder
 
@@ -57,5 +57,9 @@ end:
 	if errors.Is(err, io.EOF) {
 		err = nil
 	}
-	return sb.String(), err
+	if err != nil {
+		panic(err)
+	}
+
+	return sb.String()
 }

@@ -79,8 +79,12 @@ func TestTrim(t *testing.T) {
 	}
 
 	for i := range 10 {
-		assert(strings.Repeat(" ", i))
-		assert(strings.Repeat("\n", i))
+		s := strings.Repeat(" ", i)
+		assert(s)
+		assertEqual(t, slowTrim(string(s)), "")
+		s = strings.Repeat("\n", i)
+		assert(s)
+		assertEqual(t, slowTrim(string(s)), "")
 	}
 
 	const L = 16
@@ -93,6 +97,12 @@ func TestTrim(t *testing.T) {
 			assertEqual(t, slowTrim(string(bt)), "a")
 			bt[y] = 'b'
 			assert(string(bt))
+
+			dist := y - x
+			if dist < 0 {
+				dist = -dist
+			}
+			assertEqual(t, len(slowTrim(string(bt))), min(dist+1, 4))
 		}
 	}
 }

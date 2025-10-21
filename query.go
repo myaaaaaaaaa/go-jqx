@@ -67,6 +67,7 @@ func hasher(f func() hash.Hash) func(any, []any) any {
 func pagetrim(input any, _ []any) any {
 	s := []byte(input.(string))
 
+	s = bytes.TrimSpace(s)
 	lines := bytes.Split(s, []byte("\n"))
 	i := 0
 	for _, line := range lines {
@@ -77,7 +78,6 @@ func pagetrim(input any, _ []any) any {
 		}
 	}
 	s = bytes.Join(lines[:i], []byte("\n"))
-	s = bytes.TrimSpace(s)
 
 	return string(s)
 }

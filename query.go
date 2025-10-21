@@ -1,6 +1,7 @@
 package jqx
 
 import (
+	"bytes"
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
@@ -63,6 +64,24 @@ func hasher(f func() hash.Hash) func(any, []any) any {
 	}
 }
 
+func pagetrim(input any, _ []any) any {
+	s := []byte(input.(string))
+
+	lines := bytes.Split(s, []byte("\n"))
+	i := 0
+	for _, line := range lines {
+		lines[i] = bytes.TrimSpace(line)
+		if len(lines[i]) == 0 && i > 0 && len(lines[i-1]) == 0 {
+		} else {
+			i++
+		}
+	}
+	s = bytes.Join(lines[:i], []byte("\n"))
+	s = bytes.TrimSpace(s)
+
+	return string(s)
+}
+
 func htmlq(input any, args []any) any {
 	selector := args[0]
 	rt, err := htmlQuerySelector(input.(string), selector.(string))
@@ -108,6 +127,7 @@ func (s *State) Compile(code constString) FanOut {
 		gojq.WithFunction("sha1", 0, 0, hasher(sha1.New)),
 		gojq.WithFunction("sha256", 0, 0, hasher(sha256.New)),
 		gojq.WithFunction("sha512", 0, 0, hasher(sha512.New)),
+		gojq.WithFunction("pagetrim", 0, 0, pagetrim),
 		gojq.WithFunction("_htmlq", 1, 1, htmlq),
 		gojq.WithFunction("_htmlt", 0, 0, htmlt),
 		gojq.WithVariables(globalKeys),

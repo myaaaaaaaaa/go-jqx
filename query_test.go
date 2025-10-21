@@ -2,7 +2,9 @@ package jqx
 
 import (
 	"math"
+	"regexp"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -55,6 +57,44 @@ func TestState(t *testing.T) {
 
 	got := slices.Collect(query(nil))
 	assertString(t, got, `[aa cc qq rr aaaa [3,3] {"e":10} 10]`)
+}
+
+func TestTrim(t *testing.T) {
+	multilineRe := regexp.MustCompile(`\n\n+`)
+	slowTrim := func(s string) string {
+		lines := strings.Split(s, "\n")
+		for line := range lines {
+			line := &lines[line]
+			*line = strings.TrimSpace(*line)
+		}
+		s = strings.Join(lines, "\n")
+		s = multilineRe.ReplaceAllString(s, "\n\n")
+		return strings.TrimSpace(s)
+	}
+
+	assert := func(text string) {
+		want := slowTrim(text)
+		got := pagetrim(text, nil).(string)
+		assertEqual(t, got, want)
+	}
+
+	for i := range 10 {
+		assert(strings.Repeat(" ", i))
+		assert(strings.Repeat("\n", i))
+	}
+
+	const L = 16
+	lines := strings.Repeat("\n", L)
+	for y := range L {
+		for x := range L {
+			bt := []byte(lines)
+			bt[x] = 'a'
+			assert(string(bt))
+			assertEqual(t, slowTrim(string(bt)), "a")
+			bt[y] = 'b'
+			assert(string(bt))
+		}
+	}
 }
 
 func TestHash(t *testing.T) {

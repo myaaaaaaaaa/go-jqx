@@ -71,6 +71,13 @@ func htmlq(input any, args []any) any {
 	}
 	return rt
 }
+func htmlt(input any, _ []any) any {
+	rt, err := htmlExtractText(input.(string))
+	if err != nil {
+		return err
+	}
+	return rt
+}
 
 func (s *State) Compile(code constString) FanOut {
 	parsed, err := gojq.Parse(string(code))
@@ -102,6 +109,7 @@ func (s *State) Compile(code constString) FanOut {
 		gojq.WithFunction("sha256", 0, 0, hasher(sha256.New)),
 		gojq.WithFunction("sha512", 0, 0, hasher(sha512.New)),
 		gojq.WithFunction("_htmlq", 1, 1, htmlq),
+		gojq.WithFunction("_htmlt", 0, 0, htmlt),
 		gojq.WithVariables(globalKeys),
 	)
 	failif(err, "compiling query")

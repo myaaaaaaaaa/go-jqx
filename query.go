@@ -63,6 +63,15 @@ func hasher(f func() hash.Hash) func(any, []any) any {
 	}
 }
 
+func htmlq(input any, args []any) any {
+	selector := args[0]
+	rt, err := selectHTML(input.(string), selector.(string))
+	if err != nil {
+		return err
+	}
+	return rt
+}
+
 func (s *State) Compile(code constString) FanOut {
 	parsed, err := gojq.Parse(string(code))
 	failif(err, "parsing query")
@@ -92,6 +101,7 @@ func (s *State) Compile(code constString) FanOut {
 		gojq.WithFunction("sha1", 0, 0, hasher(sha1.New)),
 		gojq.WithFunction("sha256", 0, 0, hasher(sha256.New)),
 		gojq.WithFunction("sha512", 0, 0, hasher(sha512.New)),
+		gojq.WithFunction("_htmlq", 1, 1, htmlq),
 		gojq.WithVariables(globalKeys),
 	)
 	failif(err, "compiling query")

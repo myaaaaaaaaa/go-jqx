@@ -35,3 +35,18 @@ func htmlQuerySelector(htmlText, cssSelector string) (string, error) {
 
 	return buffer.String(), nil
 }
+
+func htmlExtractText(htmlString string) (string, error) {
+	tokenizer := html.NewTokenizer(strings.NewReader(htmlString))
+	var sb strings.Builder
+
+	for {
+		tokenType := tokenizer.Next()
+		switch tokenType {
+		case html.ErrorToken:
+			return sb.String(), nil
+		case html.TextToken:
+			sb.WriteString(tokenizer.Token().Data)
+		}
+	}
+}

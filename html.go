@@ -12,28 +12,20 @@ import (
 )
 
 func htmlQuerySelector(htmlText, cssSelector string) (string, error) {
-	// Parse the CSS selector
 	sel, err := cascadia.Parse(cssSelector)
 	if err != nil {
 		return "", err
 	}
 
-	// Parse the HTML
-	doc, err := html.Parse(strings.NewReader(htmlText))
-	if err != nil {
-		return "", err
-	}
+	// Lenient parser, only relays errors from io.Reader
+	doc := must(html.Parse(strings.NewReader(htmlText)))
 
-	// Find matching nodes
 	nodes := cascadia.QueryAll(doc, sel)
 
 	// Render the matched nodes to a string
 	var buffer bytes.Buffer
 	for _, node := range nodes {
-		err := html.Render(&buffer, node)
-		if err != nil {
-			return "", err
-		}
+		must(0, html.Render(&buffer, node))
 	}
 
 	return buffer.String(), nil

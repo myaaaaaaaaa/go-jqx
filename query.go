@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"hash"
 	"iter"
-	"maps"
 	"math/rand/v2"
 	"slices"
 
@@ -103,7 +102,7 @@ func (s *State) Compile(code constString) FanOut {
 	parsed.FuncDefs = append(builtins, parsed.FuncDefs...)
 
 	globalKeys := slices.Sorted(func(yield func(string) bool) {
-		for key := range maps.Keys(s.Globals) {
+		for key := range s.Globals {
 			yield("$" + key)
 		}
 	})

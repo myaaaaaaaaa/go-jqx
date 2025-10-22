@@ -78,6 +78,7 @@ func TestTrim(t *testing.T) {
 	}
 
 	assert := func(text string) {
+		t.Helper()
 		want := slowTrim(text)
 		got := pagetrim(text, nil).(string)
 		assertEqual(t, got, want)
@@ -100,15 +101,39 @@ func TestTrim(t *testing.T) {
 			bt[x] = 'a'
 			assert(string(bt))
 			assertEqual(t, slowTrim(string(bt)), "a")
-			bt[y] = 'b'
+
+			bt[y] = 'a'
 			assert(string(bt))
+			trimmed := slowTrim(string(bt))
 
 			dist := y - x
 			if dist < 0 {
 				dist = -dist
 			}
-			assertEqual(t, len(slowTrim(string(bt))), min(dist+1, 4))
+			dist++
+			switch dist {
+			case 1:
+				assertEqual(t, trimmed, "a")
+			case 2:
+				assertEqual(t, trimmed, "aa")
+			case 3:
+				assertEqual(t, trimmed, "a\na")
+			default:
+				assertEqual(t, trimmed, "a\n\na")
+			}
 		}
+	}
+
+	for n := range 10 {
+		want := "a\n" + strings.Repeat("a\n\n", n) + "a"
+		s := ""
+		for i := range n + 1 {
+			s += "a" + strings.Repeat("\n", i+1)
+		}
+		s += "a"
+
+		assertEqual(t, slowTrim(s), want)
+		assert(s)
 	}
 }
 

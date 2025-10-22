@@ -40,27 +40,27 @@ func TestHtmlExtractText(t *testing.T) {
 
 	assert(
 		`<html><body><p>Hello, world!</p></body></html>`,
-		"Hello, world!",
+		`Hello, world!`,
 	)
 	assert(
 		`<h1>Title</h1><p>First paragraph.</p><p>Second paragraph.</p>`,
-		"TitleFirst paragraph.Second paragraph.",
+		`TitleFirst paragraph.Second paragraph.`,
 	)
 	assert(
 		`<div><img src="image.jpg"/></div>`,
-		"",
+		``,
 	)
 	assert(
-		"",
-		"",
+		``,
+		``,
 	)
 	assert(
 		`<!-- This is a comment --><body><p>Some text</p></body>`,
-		"Some text",
+		`Some text`,
 	)
 	assert(
-		"Hello",
-		"Hello",
+		`Hello`,
+		`Hello`,
 	)
 	assert(
 		`<p>Hello</p><img src="image.jpg" alt="olleh"/>`,

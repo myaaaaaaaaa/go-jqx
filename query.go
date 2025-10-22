@@ -1,7 +1,6 @@
 package jqx
 
 import (
-	"bytes"
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
@@ -13,6 +12,7 @@ import (
 	"iter"
 	"math/rand/v2"
 	"slices"
+	"strings"
 
 	"github.com/itchyny/gojq"
 )
@@ -90,21 +90,21 @@ func hasher(f func() hash.Hash) func(any, []any) any {
 }
 
 func pagetrim(input any, _ []any) any {
-	s := []byte(input.(string))
+	s := input.(string)
 
-	s = bytes.TrimSpace(s)
-	lines := bytes.Split(s, []byte("\n"))
+	s = strings.TrimSpace(s)
+	lines := strings.Split(s, "\n")
 	i := 0
 	for _, line := range lines {
-		lines[i] = bytes.TrimSpace(line)
+		lines[i] = strings.TrimSpace(line)
 		if len(lines[i]) == 0 && i > 0 && len(lines[i-1]) == 0 {
 		} else {
 			i++
 		}
 	}
-	s = bytes.Join(lines[:i], []byte("\n"))
+	s = strings.Join(lines[:i], "\n")
 
-	return string(s)
+	return s
 }
 
 func htmlq(input any, args []any) gojq.Iter {

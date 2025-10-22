@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"hash"
 	"iter"
@@ -22,6 +23,30 @@ var builtins = must(gojq.Parse(`
 
 type constString string
 type FanOut func(any) iter.Seq[any]
+
+type nexter func() (any, bool)
+
+func (f nexter) Next() (any, bool) { return f() }
+
+func iterTest(input any, _ []any) gojq.Iter {
+	switch input := input.(type) {
+	case int:
+		return nexter(func() (any, bool) {
+			input--
+			return input, input >= 0
+		})
+	case string:
+		return nexter(func() (any, bool) {
+			rt := input
+			if len(input) > 0 {
+				input = input[1:]
+			}
+			return rt, len(rt) > 0
+		})
+	}
+
+	return gojq.NewIter(errors.New("oops"))
+}
 
 type State struct {
 	Files   map[string]any
@@ -117,6 +142,7 @@ func (s *State) Compile(code constString) FanOut {
 
 	compiled, err := gojq.Compile(
 		parsed,
+		gojq.WithIterFunction("_itertest", 0, 0, iterTest),
 		gojq.WithFunction("snapshot", 2, 2, s.snapshot),
 		gojq.WithFunction("shuffle", 1, 1, shuffle),
 		gojq.WithFunction("md5", 0, 0, hasher(md5.New)),

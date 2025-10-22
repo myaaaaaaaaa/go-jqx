@@ -23,6 +23,11 @@ func TestCompile(t *testing.T) {
 	}
 	assertEqual(t, i, 5)
 }
+func TestSmoke(t *testing.T) {
+	query := new(State).Compile(`_itertest`)
+	assertString(t, slices.Collect(query("hello.")), `[hello. ello. llo. lo. o. .]`)
+	assertString(t, slices.Collect(query(5)), `[4 3 2 1 0]`)
+}
 func TestError(t *testing.T) {
 	err := func(code string) (rt error) {
 		defer catch[error](&rt)

@@ -56,6 +56,27 @@ func TestHtmlExtract(t *testing.T) {
 		`Hello<img src="image.jpg" alt="olleh"/>`,
 	)
 
+	for i := range 5 {
+		fullText := strings.Repeat("<!-- comment -->text", i)
+		commentText := strings.Repeat("<!-- comment -->", i)
+		plainText := strings.Repeat("text", i)
+
+		assertEqual(t, htmlExtract(fullText, "  TEXT  "), plainText)
+		assertEqual(t, htmlExtract(fullText, "  TEXT  COMMENT  "), fullText)
+		assertEqual(t, htmlExtract(fullText, "  COMMENT  "), commentText)
+		assertEqual(t, htmlExtract(fullText, "    "), "")
+
+		assertEqual(t, htmlExtract(commentText, "  TEXT  COMMENT  "), commentText)
+		assertEqual(t, htmlExtract(commentText, "  TEXT  "), "")
+		assertEqual(t, htmlExtract(commentText, "  COMMENT  "), commentText)
+		assertEqual(t, htmlExtract(commentText, "    "), "")
+
+		assertEqual(t, htmlExtract(plainText, "  TEXT  COMMENT  "), plainText)
+		assertEqual(t, htmlExtract(plainText, "  TEXT  "), plainText)
+		assertEqual(t, htmlExtract(plainText, "  COMMENT  "), "")
+		assertEqual(t, htmlExtract(plainText, "    "), "")
+	}
+
 	for i := range 8 {
 		plainText := strings.Repeat("hello  world", i)
 		htmlText := strings.Repeat("<p>hello  world</p>", i)

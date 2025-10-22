@@ -33,7 +33,7 @@ func htmlExtract(htmlString, args string) string {
 	tokenizer := html.NewTokenizer(strings.NewReader(htmlString))
 	var sb strings.Builder
 
-	callbacks := map[html.TokenType]func(){}
+	callbacks := [16]func(){}
 	tagMatchers := map[string]bool{}
 	for k := range strings.SplitSeq(args, " ") {
 		switch k {

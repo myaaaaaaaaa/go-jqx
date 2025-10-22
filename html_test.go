@@ -2,6 +2,7 @@ package jqx
 
 import (
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -47,31 +48,47 @@ func TestHtmlExtract(t *testing.T) {
 	}
 
 	assert(
-		`<html><body><p>Hello, world!</p></body></html>`,
-		`Hello, world!`,
-	)
-	assert(
-		`<h1>Title</h1><p>First paragraph.</p><p>Second paragraph.</p>`,
-		`TitleFirst paragraph.Second paragraph.`,
-	)
-	assert(
-		`<div><br/></div>`,
-		``,
-	)
-	assert(
-		``,
-		``,
-	)
-	assert(
 		`<!-- This is a comment --><body><p>Some text</p></body>`,
 		`Some text`,
-	)
-	assert(
-		`Hello`,
-		`Hello`,
 	)
 	assert(
 		`<p>Hello</p><img src="image.jpg" alt="olleh"/>`,
 		`Hello<img src="image.jpg" alt="olleh"/>`,
 	)
+
+	for i := range 8 {
+		plainText := strings.Repeat("hello  world", i)
+		htmlText := strings.Repeat("<p>hello  world</p>", i)
+		pText := strings.Repeat("<p></p>", i)
+
+		assertEqual(t, htmlExtract(plainText, "  TEXT  "), plainText)
+		assertEqual(t, htmlExtract(plainText, "  TEXT  p  "), plainText)
+		assertEqual(t, htmlExtract(plainText, "  p  "), "")
+		assertEqual(t, htmlExtract(plainText, "   "), "")
+
+		assertEqual(t, htmlExtract(htmlText, "  TEXT  "), plainText)
+		assertEqual(t, htmlExtract(htmlText, "  TEXT  p  "), htmlText)
+		assertEqual(t, htmlExtract(htmlText, "  p  "), pText)
+		assertEqual(t, htmlExtract(htmlText, "   "), "")
+
+		assertEqual(t, htmlExtract(pText, "  TEXT  "), "")
+		assertEqual(t, htmlExtract(pText, "  TEXT  p  "), pText)
+		assertEqual(t, htmlExtract(pText, "  p  "), pText)
+		assertEqual(t, htmlExtract(pText, "   "), "")
+	}
+
+	abc := ""
+	for i := range 13 {
+		abc += string(rune(i + 'a'))
+	}
+	for i := range len(abc) {
+		s := strings.Split(abc, "")
+		s[i] = "<hr/>" + s[i] + "<hr/>"
+		want := strings.Join(s, "")
+		html := strings.Join(s, "<br/>")
+
+		assertEqual(t, htmlExtract(html, "  TEXT  "), abc)
+		assertEqual(t, htmlExtract(html, "  TEXT  hr  "), want)
+		assertEqual(t, htmlExtract(html, "  TEXT  br  hr  "), html)
+	}
 }

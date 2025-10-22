@@ -1,6 +1,7 @@
 package jqx
 
 import (
+	"slices"
 	"testing"
 )
 
@@ -15,19 +16,26 @@ func TestHTMLQuerySelector(t *testing.T) {
 		</html>
 	`
 
+	query := (&State{
+		Globals: map[string]any{"html": html},
+	}).Compile(`. as $sel | $html | [htmlq($sel)] | join("  ;  ")`)
+
 	assert := func(selector, want string) {
 		t.Helper()
 
-		got, err := htmlQuerySelector(html, selector)
-		if err != nil {
-			got = "error"
+		if want == "error" {
+			_, err := htmlQuerySelector(html, selector)
+			assertEqual(t, err != nil, true)
+		} else {
+			got := slices.Collect(query(selector))
+			assertEqual(t, len(got), 1)
+			assertString(t, got[0], want)
 		}
-		assertEqual(t, got, want)
 	}
 
 	assert(`.content`, `<p class="content">Second paragraph.</p>`)
 	assert(`h1`, `<h1 class="header">Title</h1>`)
-	assert(`p`, `<p>First paragraph.</p><p class="content">Second paragraph.</p>`)
+	assert(`p`, `<p>First paragraph.</p>  ;  <p class="content">Second paragraph.</p>`)
 
 	assert(`invalid[`, "error")
 }

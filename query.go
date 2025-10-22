@@ -106,13 +106,13 @@ func pagetrim(input any, _ []any) any {
 	return string(s)
 }
 
-func htmlq(input any, args []any) any {
+func htmlq(input any, args []any) gojq.Iter {
 	selector := args[0]
 	rt, err := htmlQuerySelector(input.(string), selector.(string))
 	if err != nil {
-		return err
+		return gojq.NewIter(err)
 	}
-	return rt
+	return gojq.NewIter(rt...)
 }
 func htmlt(input any, _ []any) any {
 	rt := htmlExtractText(input.(string))
@@ -150,7 +150,7 @@ func (s *State) Compile(code constString) FanOut {
 		gojq.WithFunction("sha256", 0, 0, hasher(sha256.New)),
 		gojq.WithFunction("sha512", 0, 0, hasher(sha512.New)),
 		gojq.WithFunction("pagetrim", 0, 0, pagetrim),
-		gojq.WithFunction("_htmlq", 1, 1, htmlq),
+		gojq.WithIterFunction("htmlq", 1, 1, htmlq),
 		gojq.WithFunction("_htmlt", 0, 0, htmlt),
 		gojq.WithVariables(globalKeys),
 	)

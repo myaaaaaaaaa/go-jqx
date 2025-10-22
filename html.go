@@ -1,7 +1,6 @@
 package jqx
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -11,10 +10,10 @@ import (
 	"golang.org/x/net/html"
 )
 
-func htmlQuerySelector(htmlText, cssSelector string) (string, error) {
+func htmlQuerySelector(htmlText, cssSelector string) ([]any, error) {
 	sel, err := cascadia.Parse(cssSelector)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// Lenient parser, only relays errors from io.Reader
@@ -22,13 +21,13 @@ func htmlQuerySelector(htmlText, cssSelector string) (string, error) {
 
 	nodes := cascadia.QueryAll(doc, sel)
 
-	// Render the matched nodes to a string
-	var buffer bytes.Buffer
+	var rt []any
 	for _, node := range nodes {
-		must(0, html.Render(&buffer, node))
+		var sb strings.Builder
+		must(0, html.Render(&sb, node))
+		rt = append(rt, sb.String())
 	}
-
-	return buffer.String(), nil
+	return rt, nil
 }
 
 func htmlExtractText(htmlString string) string {

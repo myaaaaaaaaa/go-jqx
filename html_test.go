@@ -40,10 +40,10 @@ func TestHTMLQuerySelector(t *testing.T) {
 	assert(`invalid[`, "error")
 }
 
-func TestHtmlExtractText(t *testing.T) {
+func TestHtmlExtract(t *testing.T) {
 	assert := func(html, want string) {
 		t.Helper()
-		assertEqual(t, htmlExtractText(html), want)
+		assertEqual(t, htmlExtract(html, "  TEXT  a  img  "), want)
 	}
 
 	assert(
@@ -55,7 +55,7 @@ func TestHtmlExtractText(t *testing.T) {
 		`TitleFirst paragraph.Second paragraph.`,
 	)
 	assert(
-		`<div><img src="image.jpg"/></div>`,
+		`<div><br/></div>`,
 		``,
 	)
 	assert(
@@ -72,6 +72,6 @@ func TestHtmlExtractText(t *testing.T) {
 	)
 	assert(
 		`<p>Hello</p><img src="image.jpg" alt="olleh"/>`,
-		"Hello\n(img: olleh)\n",
+		`Hello<img src="image.jpg" alt="olleh"/>`,
 	)
 }

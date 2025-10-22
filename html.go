@@ -2,7 +2,6 @@ package jqx
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"strings"
 
@@ -10,14 +9,14 @@ import (
 	"golang.org/x/net/html"
 )
 
-func htmlQuerySelector(htmlText, cssSelector string) ([]any, error) {
+func htmlQuerySelector(htmlString, cssSelector string) ([]any, error) {
 	sel, err := cascadia.Parse(cssSelector)
 	if err != nil {
 		return nil, err
 	}
 
 	// Lenient parser, only relays errors from io.Reader
-	doc := must(html.Parse(strings.NewReader(htmlText)))
+	doc := must(html.Parse(strings.NewReader(htmlString)))
 
 	nodes := cascadia.QueryAll(doc, sel)
 
@@ -30,28 +29,54 @@ func htmlQuerySelector(htmlText, cssSelector string) ([]any, error) {
 	return rt, nil
 }
 
-func htmlExtractText(htmlString string) string {
+func htmlExtract(htmlString, args string) string {
 	tokenizer := html.NewTokenizer(strings.NewReader(htmlString))
 	var sb strings.Builder
 
-	for {
-		tokenType := tokenizer.Next()
-		switch tokenType {
-		case html.ErrorToken:
-			goto end
-		case html.TextToken:
-			sb.Write(tokenizer.Text())
-		case html.StartTagToken, html.SelfClosingTagToken:
-			t := tokenizer.Token()
-			for _, attr := range t.Attr {
-				if attr.Key == "alt" {
-					sb.WriteString(fmt.Sprintf("\n(%s: %s)\n", t.Data, attr.Val))
+	callbacks := map[html.TokenType]func(){}
+	tagMatchers := map[string]bool{}
+	for k := range strings.SplitSeq(args, " ") {
+		switch k {
+		case "":
+
+		case "COMMENT":
+			callbacks[html.CommentToken] = func() {
+				sb.WriteString(tokenizer.Token().String())
+			}
+		case "TEXT":
+			callbacks[html.TextToken] = func() {
+				sb.Write(tokenizer.Text())
+			}
+
+		default:
+			tagMatchers[k] = true
+
+			callbacks[html.StartTagToken] = func() {
+				t := tokenizer.Token()
+				if !tagMatchers[t.Data] {
+					return
 				}
+				sb.WriteString(t.String())
 			}
 		}
 	}
 
-end:
+	for {
+		tokenType := tokenizer.Next()
+		if tokenType == html.ErrorToken {
+			break
+		}
+		switch tokenType {
+		case html.SelfClosingTagToken, html.EndTagToken:
+			tokenType = html.StartTagToken
+		}
+
+		f := callbacks[tokenType]
+		if f != nil {
+			f()
+		}
+	}
+
 	err := tokenizer.Err()
 	if errors.Is(err, io.EOF) {
 		err = nil

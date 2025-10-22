@@ -19,6 +19,7 @@ import (
 
 var builtins = must(gojq.Parse(`
 	def shuffle: shuffle("A seed");
+	def htmlt:   _htmlt("TEXT");
 `)).FuncDefs
 
 type constString string
@@ -114,8 +115,8 @@ func htmlq(input any, args []any) gojq.Iter {
 	}
 	return gojq.NewIter(rt...)
 }
-func htmlt(input any, _ []any) any {
-	rt := htmlExtractText(input.(string))
+func htmlt(input any, args []any) any {
+	rt := htmlExtract(input.(string), args[0].(string))
 	return rt
 }
 
@@ -151,7 +152,7 @@ func (s *State) Compile(code constString) FanOut {
 		gojq.WithFunction("sha512", 0, 0, hasher(sha512.New)),
 		gojq.WithFunction("pagetrim", 0, 0, pagetrim),
 		gojq.WithIterFunction("htmlq", 1, 1, htmlq),
-		gojq.WithFunction("_htmlt", 0, 0, htmlt),
+		gojq.WithFunction("_htmlt", 1, 1, htmlt),
 		gojq.WithVariables(globalKeys),
 	)
 	failif(err, "compiling query")

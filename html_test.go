@@ -182,11 +182,33 @@ func TestHtmlExtractProperties(t *testing.T) {
 		return want == got
 	})
 	fuzz("commutative", func(html HTMLString, tokenFilter1, tokenFilter2 TokenFilterString) bool {
-		tokenFilter1.trim(4)
-		tokenFilter2.trim(4)
+		tokenFilter1.trim(5)
+		tokenFilter2.trim(5)
 		output1 := htmlExtract(html.s(), tokenFilter1.s())
 		output2 := htmlExtract(html.s(), tokenFilter2.s())
 		return htmlExtract(output2, tokenFilter1.s()) == htmlExtract(output1, tokenFilter2.s())
+	})
+	fuzz("intersection", func(html HTMLString, tokenFilter1, tokenFilter2 TokenFilterString) bool {
+		tokenFilter1.trim(5)
+		tokenFilter2.trim(5)
+		intersection := map[string][2]bool{}
+		for t, tokenFilter := range []TokenFilterString{tokenFilter1, tokenFilter2} {
+			for i := range tokenFilter {
+				k := tokenFilter[i : i+1].s()
+				s := intersection[k]
+				s[t] = true
+				intersection[k] = s
+			}
+		}
+		intersectFilter := ""
+		for k, v := range intersection {
+			if v[0] && v[1] {
+				intersectFilter += k
+			}
+		}
+		got := htmlExtract(htmlExtract(html.s(), tokenFilter1.s()), tokenFilter2.s())
+		want := htmlExtract(html.s(), intersectFilter)
+		return want == got
 	})
 
 	fuzz("idempotency", func(html HTMLString, tokenFilter TokenFilterString) bool {

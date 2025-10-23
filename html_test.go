@@ -1,8 +1,6 @@
 package jqx
 
 import (
-	"math/rand"
-	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -117,43 +115,53 @@ func TestHtmlExtract(t *testing.T) {
 	}
 }
 
+func stringGen(b []byte, tokens ...string) string {
+	var sb strings.Builder
+
+	for _, c := range b {
+		token := tokens[int(c)%len(tokens)]
+		sb.WriteString(token)
+	}
+
+	return sb.String()
+}
+
 // A string that is a valid HTML snippet.
 type HTMLString []byte
 
-// Generate generates a random HTML snippet.
-func (HTMLString) Generate(r *rand.Rand, size int) reflect.Value {
-	var sb strings.Builder
-	tags := []string{"p", "div", "span", "a", "img", "h1", "h2", "h3"}
-	for range size {
-		switch r.Intn(3) {
-		case 0: // Text
-			sb.WriteString("some text ")
-		case 1: // Comment
-			sb.WriteString("<!-- some comment -->")
-		case 2: // Tag
-			tag := tags[r.Intn(len(tags))]
-			sb.WriteString("<" + tag + ">")
-			if r.Intn(2) == 0 {
-				sb.WriteString("some content")
-			}
-			sb.WriteString("</" + tag + ">")
-		}
-	}
-	return reflect.ValueOf(HTMLString(sb.String()))
+func (b HTMLString) s() string {
+	return stringGen(b,
+		`some  text`,
+		`<!--  some  text  -->`,
+		`<p></p>`,
+		`</div>`,
+		`<span>`,
+		`<a href="m.htm">`,
+		`<img src="i.jpg" />`,
+		`<br />`,
+		`<hr />`,
+	)
 }
 
 // A string that is a valid set of arguments for htmlExtract.
 type TokenFilterString []byte
 
-// Generate generates a random set of arguments for htmlExtract.
-func (TokenFilterString) Generate(r *rand.Rand, size int) reflect.Value {
-	tokenFilter := []string{"p", "div", "span", "a", "img", "h1", "h2", "h3", "TEXT", "COMMENT"}
-	rand.Shuffle(len(tokenFilter), func(i, j int) { tokenFilter[i], tokenFilter[j] = tokenFilter[j], tokenFilter[i] })
-	return reflect.ValueOf(TokenFilterString(strings.Join(tokenFilter[:r.Intn(len(tokenFilter)+1)], " ")))
+func (b TokenFilterString) s() string {
+	if len(b) > 3 {
+		b = b[:b[0]%3+1]
+	}
+	return stringGen(b,
+		`  TEXT  `,
+		`  COMMENT  `,
+		`  p  `,
+		`  div  `,
+		`  span  `,
+		`  a  `,
+		`  img  `,
+		`  br  `,
+		`  hr  `,
+	)
 }
-
-func (b HTMLString) s() string        { return string(b) }
-func (b TokenFilterString) s() string { return string(b) }
 
 func TestHtmlExtractProperties(t *testing.T) {
 	fuzz := func(name string, f any) {
@@ -178,7 +186,7 @@ func TestHtmlExtractProperties(t *testing.T) {
 
 	fuzz("filtering", func(html HTMLString, tokenFilter1, tokenFilter2, tokenFilter3 TokenFilterString) bool {
 		outputA := htmlExtract(html.s(), tokenFilter2.s())
-		outputB := htmlExtract(html.s(), tokenFilter1.s()+" "+tokenFilter2.s()+" "+tokenFilter3.s())
+		outputB := htmlExtract(html.s(), tokenFilter1.s()+tokenFilter2.s()+tokenFilter3.s())
 		return isSubsequence(outputA, outputB) &&
 			isSubsequence(outputA, html.s()) &&
 			isSubsequence(outputB, html.s())

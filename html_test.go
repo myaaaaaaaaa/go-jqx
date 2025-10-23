@@ -146,10 +146,12 @@ func (b HTMLString) s() string {
 // A string that is a valid set of arguments for htmlExtract.
 type TokenFilterString []byte
 
-func (b TokenFilterString) s() string {
-	if len(b) > 3 {
-		b = b[:b[0]%3+1]
+func (b *TokenFilterString) trim(n int) {
+	if len(*b) > n {
+		*b = (*b)[:int((*b)[0])%n+1]
 	}
+}
+func (b TokenFilterString) s() string {
 	return stringGen(b,
 		`  TEXT  `,
 		`  COMMENT  `,
@@ -173,18 +175,23 @@ func TestHtmlExtractProperties(t *testing.T) {
 	}
 
 	fuzz("concatenation", func(html1, html2 HTMLString, tokenFilter TokenFilterString) bool {
+		tokenFilter.trim(3)
 		want := htmlExtract(html1.s(), tokenFilter.s()) + htmlExtract(html2.s(), tokenFilter.s())
 		got := htmlExtract(html1.s()+html2.s(), tokenFilter.s())
 		return want == got
 	})
 
 	fuzz("idempotency", func(html HTMLString, tokenFilter TokenFilterString) bool {
+		tokenFilter.trim(3)
 		want := htmlExtract(html.s(), tokenFilter.s())
 		got := htmlExtract(want, tokenFilter.s())
 		return want == got
 	})
 
 	fuzz("filtering", func(html HTMLString, tokenFilter1, tokenFilter2, tokenFilter3 TokenFilterString) bool {
+		tokenFilter1.trim(2)
+		tokenFilter2.trim(3)
+		tokenFilter3.trim(2)
 		outputA := htmlExtract(html.s(), tokenFilter2.s())
 		outputB := htmlExtract(html.s(), tokenFilter1.s()+tokenFilter2.s()+tokenFilter3.s())
 		return isSubsequence(outputA, outputB) &&

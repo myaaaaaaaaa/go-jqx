@@ -1,6 +1,7 @@
 package jqx
 
 import (
+	"bytes"
 	"slices"
 	"strings"
 	"testing"
@@ -180,6 +181,13 @@ func TestHtmlExtractProperties(t *testing.T) {
 		got := htmlExtract(html1.s()+html2.s(), tokenFilter.s())
 		return want == got
 	})
+	fuzz("commutative", func(html HTMLString, tokenFilter1, tokenFilter2 TokenFilterString) bool {
+		tokenFilter1.trim(4)
+		tokenFilter2.trim(4)
+		output1 := htmlExtract(html.s(), tokenFilter1.s())
+		output2 := htmlExtract(html.s(), tokenFilter2.s())
+		return htmlExtract(output2, tokenFilter1.s()) == htmlExtract(output1, tokenFilter2.s())
+	})
 
 	fuzz("idempotency", func(html HTMLString, tokenFilter TokenFilterString) bool {
 		tokenFilter.trim(3)
@@ -211,9 +219,33 @@ func TestHtmlExtractProperties(t *testing.T) {
 		return htmlExtract(html.s(), tokenFilter.s()) == html.s()
 	})
 
-	fuzz("empty_arguments", func(html HTMLString) bool {
-		return htmlExtract(html.s(), " ") == ""
+	fuzz("misc_basic", func(html HTMLString, tokenFilter TokenFilterString) bool {
+		tokenFilter.trim(3)
+		return len(htmlExtract(html.s(), tokenFilter.s())) <= len(html.s()) &&
+			htmlExtract(html.s(), " ") == "" &&
+			htmlExtract("", tokenFilter.s()) == ""
 	})
+}
+func TestExtractSequence(t *testing.T) {
+	assert := func(html, tokenFilter, want []byte) {
+		t.Helper()
+		assertEqual(t,
+			htmlExtract(
+				HTMLString(html).s(),
+				TokenFilterString(tokenFilter).s(),
+			),
+			HTMLString(want).s(),
+		)
+	}
+	byteSeq := []byte{0, 1, 2, 3, 4, 5, 6}
+	for i := range byteSeq {
+		for rep := range 4 {
+			rep := rep + 1
+			assert(bytes.Repeat(byteSeq, rep), byteSeq[:i], bytes.Repeat(byteSeq[:i], rep))
+			assert(bytes.Repeat(byteSeq, rep), byteSeq[i:], bytes.Repeat(byteSeq[i:], rep))
+			assert(bytes.Repeat(byteSeq, rep), byteSeq[i:i+1], bytes.Repeat(byteSeq[i:i+1], rep))
+		}
+	}
 }
 
 func isSubsequence(sub, super string) bool {

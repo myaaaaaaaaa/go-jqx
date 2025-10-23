@@ -137,9 +137,9 @@ func (b HTMLString) s() string {
 		`</div>`,
 		`<span>`,
 		`<a href="m.htm">`,
-		`<img src="i.jpg" />`,
-		`<br />`,
-		`<hr />`,
+		`<img src="i.jpg"/>`,
+		`<br/>`,
+		`<hr/>`,
 	)
 }
 
@@ -197,6 +197,18 @@ func TestHtmlExtractProperties(t *testing.T) {
 		return isSubsequence(outputA, outputB) &&
 			isSubsequence(outputA, html.s()) &&
 			isSubsequence(outputB, html.s())
+	})
+
+	fuzz("catchall", func(html HTMLString, tokenFilter TokenFilterString) bool {
+		if len(tokenFilter) == 0 {
+			return true
+		}
+
+		tokenFilter.trim(4)
+		for i := range html {
+			html[i] = tokenFilter[int(html[i])%len(tokenFilter)]
+		}
+		return htmlExtract(html.s(), tokenFilter.s()) == html.s()
 	})
 
 	fuzz("empty_arguments", func(html HTMLString) bool {

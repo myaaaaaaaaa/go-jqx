@@ -131,8 +131,8 @@ type HTMLString []byte
 
 func (b HTMLString) s() string {
 	return stringGen(b,
-		`some  text`,
-		`<!--  some  text  -->`,
+		`hello   world`,
+		`<!-- a  comment -->`,
 		`<p></p>`,
 		`</div>`,
 		`<span>`,

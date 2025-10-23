@@ -1,9 +1,14 @@
 package jqx
 
 import (
+	"math/rand"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
+	"testing/quick"
+
+	"golang.org/x/net/html"
 )
 
 func TestHTMLQuerySelector(t *testing.T) {
@@ -112,4 +117,161 @@ func TestHtmlExtract(t *testing.T) {
 		assertEqual(t, htmlExtract(html, "  TEXT  hr  "), want)
 		assertEqual(t, htmlExtract(html, "  TEXT  br  hr  "), html)
 	}
+}
+
+// HTMLString is a string that is a valid HTML snippet.
+type HTMLString string
+
+// Generate generates a random HTML snippet.
+func (HTMLString) Generate(r *rand.Rand, size int) reflect.Value {
+	var sb strings.Builder
+	tags := []string{"p", "div", "span", "a", "img", "h1", "h2", "h3"}
+	for i := 0; i < size; i++ {
+		switch r.Intn(3) {
+		case 0: // Text
+			sb.WriteString("some text ")
+		case 1: // Comment
+			sb.WriteString("<!-- some comment -->")
+		case 2: // Tag
+			tag := tags[r.Intn(len(tags))]
+			sb.WriteString("<" + tag + ">")
+			if r.Intn(2) == 0 {
+				sb.WriteString("some content")
+			}
+			sb.WriteString("</" + tag + ">")
+		}
+	}
+	return reflect.ValueOf(HTMLString(sb.String()))
+}
+
+// ArgsString is a string that is a valid set of arguments for htmlExtract.
+type ArgsString string
+
+// Generate generates a random set of arguments for htmlExtract.
+func (ArgsString) Generate(r *rand.Rand, size int) reflect.Value {
+	args := []string{"p", "div", "span", "a", "img", "h1", "h2", "h3", "TEXT", "COMMENT"}
+	rand.Shuffle(len(args), func(i, j int) { args[i], args[j] = args[j], args[i] })
+	return reflect.ValueOf(ArgsString(strings.Join(args[:r.Intn(len(args)+1)], " ")))
+}
+
+func TestHtmlExtractProperties(t *testing.T) {
+	t.Run("concatenation", func(t *testing.T) {
+		f := func(html1, html2 HTMLString, args ArgsString) bool {
+			want := htmlExtract(string(html1), string(args)) + htmlExtract(string(html2), string(args))
+			got := htmlExtract(string(html1)+string(html2), string(args))
+			return want == got
+		}
+		if err := quick.Check(f, nil); err != nil {
+			t.Error(err)
+		}
+	})
+
+	t.Run("idempotency", func(t *testing.T) {
+		f := func(html HTMLString, args ArgsString) bool {
+			want := htmlExtract(string(html), string(args))
+			got := htmlExtract(want, string(args))
+			return want == got
+		}
+		if err := quick.Check(f, nil); err != nil {
+			t.Error(err)
+		}
+	})
+
+	t.Run("filtering", func(t *testing.T) {
+		f := func(html HTMLString) bool {
+			args := []string{"p", "div", "span", "a", "img", "h1", "h2", "h3", "TEXT", "COMMENT"}
+			rand.Shuffle(len(args), func(i, j int) { args[i], args[j] = args[j], args[i] })
+			argsA := strings.Join(args[:len(args)/2], " ")
+			argsB := strings.Join(args, " ")
+			outputA := htmlExtract(string(html), argsA)
+			outputB := htmlExtract(string(html), argsB)
+			return isSubsequence(outputA, outputB)
+		}
+		if err := quick.Check(f, nil); err != nil {
+			t.Error(err)
+		}
+	})
+
+	t.Run("empty_arguments", func(t *testing.T) {
+		f := func(html HTMLString) bool {
+			return htmlExtract(string(html), " ") == ""
+		}
+		if err := quick.Check(f, nil); err != nil {
+			t.Error(err)
+		}
+	})
+
+	t.Run("order_preservation", func(t *testing.T) {
+		f := func(htmlStr HTMLString, args ArgsString) bool {
+			// Reimplement htmlExtract logic to generate an expected value.
+			var expected strings.Builder
+			tagMatchers := make(map[string]bool)
+			var hasText, hasComment, hasTags bool
+			for _, k := range strings.Fields(string(args)) {
+				switch k {
+				case "COMMENT":
+					hasComment = true
+				case "TEXT":
+					hasText = true
+				default:
+					hasTags = true
+					tagMatchers[k] = true
+				}
+			}
+
+			tokenizer := html.NewTokenizer(strings.NewReader(string(htmlStr)))
+			for {
+				tokenType := tokenizer.Next()
+				if tokenType == html.ErrorToken {
+					break
+				}
+
+				switch tokenType {
+				case html.CommentToken:
+					if hasComment {
+						expected.WriteString(tokenizer.Token().String())
+					}
+				case html.TextToken:
+					if hasText {
+						expected.Write(tokenizer.Text())
+					}
+				case html.StartTagToken, html.EndTagToken, html.SelfClosingTagToken:
+					if hasTags {
+						t := tokenizer.Token()
+						if tagMatchers[t.Data] {
+							expected.WriteString(t.String())
+						}
+					}
+				}
+			}
+
+			extracted := htmlExtract(string(htmlStr), string(args))
+			return extracted == expected.String()
+		}
+		if err := quick.Check(f, nil); err != nil {
+			t.Error(err)
+		}
+	})
+}
+
+func isSubsequenceSlice(sub, super []string) bool {
+	i, j := 0, 0
+	for i < len(sub) && j < len(super) {
+		if sub[i] == super[j] {
+			i++
+		}
+		j++
+	}
+	return i == len(sub)
+}
+
+func isSubsequence(sub, super string) bool {
+	i, j := 0, 0
+	for i < len(sub) && j < len(super) {
+		if sub[i] == super[j] {
+			i++
+		}
+		j++
+	}
+	return i == len(sub)
 }

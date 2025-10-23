@@ -118,7 +118,7 @@ func TestHtmlExtract(t *testing.T) {
 }
 
 // A string that is a valid HTML snippet.
-type HTMLString struct{ s string }
+type HTMLString []byte
 
 // Generate generates a random HTML snippet.
 func (HTMLString) Generate(r *rand.Rand, size int) reflect.Value {
@@ -139,18 +139,21 @@ func (HTMLString) Generate(r *rand.Rand, size int) reflect.Value {
 			sb.WriteString("</" + tag + ">")
 		}
 	}
-	return reflect.ValueOf(HTMLString{sb.String()})
+	return reflect.ValueOf(HTMLString(sb.String()))
 }
 
 // A string that is a valid set of arguments for htmlExtract.
-type TokenFilterString struct{ s string }
+type TokenFilterString []byte
 
 // Generate generates a random set of arguments for htmlExtract.
 func (TokenFilterString) Generate(r *rand.Rand, size int) reflect.Value {
 	tokenFilter := []string{"p", "div", "span", "a", "img", "h1", "h2", "h3", "TEXT", "COMMENT"}
 	rand.Shuffle(len(tokenFilter), func(i, j int) { tokenFilter[i], tokenFilter[j] = tokenFilter[j], tokenFilter[i] })
-	return reflect.ValueOf(TokenFilterString{strings.Join(tokenFilter[:r.Intn(len(tokenFilter)+1)], " ")})
+	return reflect.ValueOf(TokenFilterString(strings.Join(tokenFilter[:r.Intn(len(tokenFilter)+1)], " ")))
 }
+
+func (b HTMLString) s() string        { return string(b) }
+func (b TokenFilterString) s() string { return string(b) }
 
 func TestHtmlExtractProperties(t *testing.T) {
 	fuzz := func(name string, f any) {
@@ -162,27 +165,27 @@ func TestHtmlExtractProperties(t *testing.T) {
 	}
 
 	fuzz("concatenation", func(html1, html2 HTMLString, tokenFilter TokenFilterString) bool {
-		want := htmlExtract(html1.s, tokenFilter.s) + htmlExtract(html2.s, tokenFilter.s)
-		got := htmlExtract(html1.s+html2.s, tokenFilter.s)
+		want := htmlExtract(html1.s(), tokenFilter.s()) + htmlExtract(html2.s(), tokenFilter.s())
+		got := htmlExtract(html1.s()+html2.s(), tokenFilter.s())
 		return want == got
 	})
 
 	fuzz("idempotency", func(html HTMLString, tokenFilter TokenFilterString) bool {
-		want := htmlExtract(html.s, tokenFilter.s)
-		got := htmlExtract(want, tokenFilter.s)
+		want := htmlExtract(html.s(), tokenFilter.s())
+		got := htmlExtract(want, tokenFilter.s())
 		return want == got
 	})
 
 	fuzz("filtering", func(html HTMLString, tokenFilter1, tokenFilter2, tokenFilter3 TokenFilterString) bool {
-		outputA := htmlExtract(html.s, tokenFilter2.s)
-		outputB := htmlExtract(html.s, tokenFilter1.s+" "+tokenFilter2.s+" "+tokenFilter3.s)
+		outputA := htmlExtract(html.s(), tokenFilter2.s())
+		outputB := htmlExtract(html.s(), tokenFilter1.s()+" "+tokenFilter2.s()+" "+tokenFilter3.s())
 		return isSubsequence(outputA, outputB) &&
-			isSubsequence(outputA, html.s) &&
-			isSubsequence(outputB, html.s)
+			isSubsequence(outputA, html.s()) &&
+			isSubsequence(outputB, html.s())
 	})
 
 	fuzz("empty_arguments", func(html HTMLString) bool {
-		return htmlExtract(html.s, " ") == ""
+		return htmlExtract(html.s(), " ") == ""
 	})
 }
 

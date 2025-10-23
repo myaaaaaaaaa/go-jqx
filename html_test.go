@@ -117,14 +117,14 @@ func TestHtmlExtract(t *testing.T) {
 	}
 }
 
-// HTMLString is a string that is a valid HTML snippet.
+// A string that is a valid HTML snippet.
 type HTMLString string
 
 // Generate generates a random HTML snippet.
 func (HTMLString) Generate(r *rand.Rand, size int) reflect.Value {
 	var sb strings.Builder
 	tags := []string{"p", "div", "span", "a", "img", "h1", "h2", "h3"}
-	for i := 0; i < size; i++ {
+	for range size {
 		switch r.Intn(3) {
 		case 0: // Text
 			sb.WriteString("some text ")
@@ -142,14 +142,14 @@ func (HTMLString) Generate(r *rand.Rand, size int) reflect.Value {
 	return reflect.ValueOf(HTMLString(sb.String()))
 }
 
-// ArgsString is a string that is a valid set of arguments for htmlExtract.
-type ArgsString string
+// A string that is a valid set of arguments for htmlExtract.
+type TokenFilterString string
 
 // Generate generates a random set of arguments for htmlExtract.
-func (ArgsString) Generate(r *rand.Rand, size int) reflect.Value {
-	args := []string{"p", "div", "span", "a", "img", "h1", "h2", "h3", "TEXT", "COMMENT"}
-	rand.Shuffle(len(args), func(i, j int) { args[i], args[j] = args[j], args[i] })
-	return reflect.ValueOf(ArgsString(strings.Join(args[:r.Intn(len(args)+1)], " ")))
+func (TokenFilterString) Generate(r *rand.Rand, size int) reflect.Value {
+	tokenFilter := []string{"p", "div", "span", "a", "img", "h1", "h2", "h3", "TEXT", "COMMENT"}
+	rand.Shuffle(len(tokenFilter), func(i, j int) { tokenFilter[i], tokenFilter[j] = tokenFilter[j], tokenFilter[i] })
+	return reflect.ValueOf(TokenFilterString(strings.Join(tokenFilter[:r.Intn(len(tokenFilter)+1)], " ")))
 }
 
 func TestHtmlExtractProperties(t *testing.T) {
@@ -161,21 +161,21 @@ func TestHtmlExtractProperties(t *testing.T) {
 		})
 	}
 
-	fuzz("concatenation", func(html1, html2 HTMLString, args ArgsString) bool {
-		want := htmlExtract(string(html1), string(args)) + htmlExtract(string(html2), string(args))
-		got := htmlExtract(string(html1)+string(html2), string(args))
+	fuzz("concatenation", func(html1, html2 HTMLString, tokenFilter TokenFilterString) bool {
+		want := htmlExtract(string(html1), string(tokenFilter)) + htmlExtract(string(html2), string(tokenFilter))
+		got := htmlExtract(string(html1)+string(html2), string(tokenFilter))
 		return want == got
 	})
 
-	fuzz("idempotency", func(html HTMLString, args ArgsString) bool {
-		want := htmlExtract(string(html), string(args))
-		got := htmlExtract(want, string(args))
+	fuzz("idempotency", func(html HTMLString, tokenFilter TokenFilterString) bool {
+		want := htmlExtract(string(html), string(tokenFilter))
+		got := htmlExtract(want, string(tokenFilter))
 		return want == got
 	})
 
-	fuzz("filtering", func(html HTMLString, args1, args2, args3 ArgsString) bool {
-		outputA := htmlExtract(string(html), string(args2))
-		outputB := htmlExtract(string(html), string(args1+" "+args2+" "+args3))
+	fuzz("filtering", func(html HTMLString, tokenFilter1, tokenFilter2, tokenFilter3 TokenFilterString) bool {
+		outputA := htmlExtract(string(html), string(tokenFilter2))
+		outputB := htmlExtract(string(html), string(tokenFilter1+" "+tokenFilter2+" "+tokenFilter3))
 		return isSubsequence(outputA, outputB) &&
 			isSubsequence(outputA, string(html)) &&
 			isSubsequence(outputB, string(html))

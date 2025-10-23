@@ -29,16 +29,14 @@ func htmlQuerySelector(htmlString, cssSelector string) ([]any, error) {
 	return rt, nil
 }
 
-func htmlExtract(htmlString, args string) string {
+func htmlExtract(htmlString, tokenFilter string) string {
 	tokenizer := html.NewTokenizer(strings.NewReader(htmlString))
 	var sb strings.Builder
 
 	callbacks := [16]func(){}
 	tagMatchers := map[string]bool{}
-	for k := range strings.SplitSeq(args, " ") {
+	for k := range strings.FieldsSeq(tokenFilter) {
 		switch k {
-		case "":
-
 		case "COMMENT":
 			callbacks[html.CommentToken] = func() {
 				sb.WriteString(tokenizer.Token().String())

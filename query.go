@@ -97,7 +97,7 @@ func pagetrim(input any, _ []any) any {
 	i := 0
 	for _, line := range lines {
 		lines[i] = strings.TrimSpace(line)
-		if len(lines[i]) == 0 && i > 0 && len(lines[i-1]) == 0 {
+		if lines[i] == "" && i > 0 && lines[i-1] == "" {
 		} else {
 			i++
 		}

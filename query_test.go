@@ -66,6 +66,7 @@ func TestState(t *testing.T) {
 }
 
 func TestTrim(t *testing.T) {
+	newlineRe := regexp.MustCompile(`\s*\n\s*`)
 	removeSpaces := func(s string) string {
 		return strings.Map(func(r rune) rune {
 			if unicode.IsSpace(r) {
@@ -74,9 +75,8 @@ func TestTrim(t *testing.T) {
 			return r
 		}, s)
 	}
-	multilineRe := regexp.MustCompile(`\n\n+`)
-	newlineRe := regexp.MustCompile(`\s*\n\s*`)
-	fastTrim := func(s string) string {
+
+	checkPagetrim := func(s string) string {
 		t.Helper()
 		rt := pagetrim(s, nil).(string)
 		assertEqual(t, pagetrim(rt, nil).(string), rt)
@@ -94,29 +94,12 @@ func TestTrim(t *testing.T) {
 		assertEqual(t, newlineRe.ReplaceAllString(rt, ""), newlineRe.ReplaceAllString("\n"+s+"\n", ""))
 		return rt
 	}
-	slowTrim := func(s string) string {
-		lines := strings.Split(s, "\n")
-		for line := range lines {
-			line := &lines[line]
-			*line = strings.TrimSpace(*line)
-		}
-		s = strings.Join(lines, "\n")
-		s = multilineRe.ReplaceAllString(s, "\n\n")
-		return strings.TrimSpace(s)
-	}
-
-	assert := func(text string) {
-		t.Helper()
-		assertEqual(t, fastTrim(text), slowTrim(text))
-	}
 
 	for i := range 10 {
 		s := strings.Repeat(" ", i)
-		assert(s)
-		assertEqual(t, slowTrim(string(s)), "")
+		assertEqual(t, checkPagetrim(s), "")
 		s = strings.Repeat("\n", i)
-		assert(s)
-		assertEqual(t, slowTrim(string(s)), "")
+		assertEqual(t, checkPagetrim(s), "")
 	}
 
 	const L = 16
@@ -125,12 +108,10 @@ func TestTrim(t *testing.T) {
 		for x := range L {
 			bt := []byte(lines)
 			bt[x] = 'a'
-			assert(string(bt))
-			assertEqual(t, slowTrim(string(bt)), "a")
+			assertEqual(t, checkPagetrim(string(bt)), "a")
 
 			bt[y] = 'a'
-			assert(string(bt))
-			trimmed := slowTrim(string(bt))
+			trimmed := checkPagetrim(string(bt))
 
 			dist := y - x
 			if dist < 0 {
@@ -158,8 +139,7 @@ func TestTrim(t *testing.T) {
 		}
 		s += "a"
 
-		assertEqual(t, slowTrim(s), want)
-		assert(s)
+		assertEqual(t, checkPagetrim(s), want)
 	}
 }
 

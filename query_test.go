@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"unicode"
 )
 
 func TestCompile(t *testing.T) {
@@ -65,7 +66,29 @@ func TestState(t *testing.T) {
 }
 
 func TestTrim(t *testing.T) {
+	removeSpaces := func(s string) string {
+		return strings.Map(func(r rune) rune {
+			if unicode.IsSpace(r) {
+				return -1
+			}
+			return r
+		}, s)
+	}
 	multilineRe := regexp.MustCompile(`\n\n+`)
+	fastTrim := func(s string) string {
+		rt := pagetrim(s, nil).(string)
+		assertEqual(t, pagetrim(rt, nil).(string), rt)
+		assertEqual(t, len(rt) > len(s), false)
+
+		assertEqual(t, strings.HasPrefix(rt, "\n"), false)
+		assertEqual(t, strings.HasSuffix(rt, "\n"), false)
+		assertEqual(t, strings.Contains(rt, "\n\n\n"), false)
+		assertEqual(t, strings.Contains(rt, "\n "), false)
+		assertEqual(t, strings.Contains(rt, " \n"), false)
+
+		assertEqual(t, removeSpaces(rt), removeSpaces(s))
+		return rt
+	}
 	slowTrim := func(s string) string {
 		lines := strings.Split(s, "\n")
 		for line := range lines {
@@ -79,9 +102,7 @@ func TestTrim(t *testing.T) {
 
 	assert := func(text string) {
 		t.Helper()
-		want := slowTrim(text)
-		got := pagetrim(text, nil).(string)
-		assertEqual(t, got, want)
+		assertEqual(t, fastTrim(text), slowTrim(text))
 	}
 
 	for i := range 10 {

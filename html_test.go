@@ -181,6 +181,25 @@ func TestHtmlExtractProperties(t *testing.T) {
 		got := htmlExtract(html1.s()+html2.s(), tokenFilter.s())
 		return want == got
 	})
+	fuzz("inequality", func(html HTMLString, tokenFilter TokenFilterString) bool {
+		for i := range tokenFilter {
+			tokenFilter := tokenFilter[i : i+1]
+			a := htmlExtract(html.s(), tokenFilter.s())
+			tokenFilter[0]++
+			b := htmlExtract(html.s(), tokenFilter.s())
+
+			if a != "" && a == b {
+				return false
+			}
+			if a != "" && strings.Contains(b, a) {
+				return false
+			}
+			if b != "" && strings.Contains(a, b) {
+				return false
+			}
+		}
+		return true
+	})
 	fuzz("sets", func(html HTMLString, tokenFilter1, tokenFilter2 TokenFilterString) bool {
 		tokenFilter1.trim(5)
 		tokenFilter2.trim(5)

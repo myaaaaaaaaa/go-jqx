@@ -75,7 +75,9 @@ func TestTrim(t *testing.T) {
 		}, s)
 	}
 	multilineRe := regexp.MustCompile(`\n\n+`)
+	newlineRe := regexp.MustCompile(`\s*\n\s*`)
 	fastTrim := func(s string) string {
+		t.Helper()
 		rt := pagetrim(s, nil).(string)
 		assertEqual(t, pagetrim(rt, nil).(string), rt)
 		assertEqual(t, len(rt) > len(s), false)
@@ -86,7 +88,10 @@ func TestTrim(t *testing.T) {
 		assertEqual(t, strings.Contains(rt, "\n "), false)
 		assertEqual(t, strings.Contains(rt, " \n"), false)
 
+		assertEqual(t, strings.Contains(rt, "\n\n"), strings.Contains(strings.TrimSpace(s), "\n\n"))
+
 		assertEqual(t, removeSpaces(rt), removeSpaces(s))
+		assertEqual(t, newlineRe.ReplaceAllString(rt, ""), newlineRe.ReplaceAllString("\n"+s+"\n", ""))
 		return rt
 	}
 	slowTrim := func(s string) string {

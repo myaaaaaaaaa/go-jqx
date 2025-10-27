@@ -17,9 +17,10 @@ func xmlQueryPath(xmlString, xpath string) (string, error) {
 		return "", err
 	}
 
-	if len(nodes) == 0 {
-		return "", nil
+	var sb strings.Builder
+	for _, node := range nodes {
+		sb.WriteString(node.OutputXML(true))
 	}
 
-	return nodes[0].OutputXML(true), nil
+	return sb.String(), nil
 }

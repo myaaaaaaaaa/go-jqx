@@ -42,3 +42,18 @@ func TestXmlQueryPath_InvalidXPath(t *testing.T) {
 		t.Fatal("expected an error, but got nil")
 	}
 }
+
+func TestXmlQueryPath_MultipleMatches(t *testing.T) {
+	xml := `<root><book><title>Title 1</title><title>Title 2</title></book></root>`
+	xpath := "/root/book/title"
+
+	result, err := xmlQueryPath(xml, xpath)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expected := `<title>Title 1</title><title>Title 2</title>`
+	if result != expected {
+		t.Fatalf("expected %q, got %q", expected, result)
+	}
+}

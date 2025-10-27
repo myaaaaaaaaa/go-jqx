@@ -5,6 +5,7 @@ go 1.24.0
 require (
 	github.com/alecthomas/chroma/v2 v2.15.0
 	github.com/andybalholm/cascadia v1.3.3
+	github.com/antchfx/xmlquery v1.5.0
 	github.com/charmbracelet/bubbles v0.20.0
 	github.com/charmbracelet/bubbletea v1.3.3
 	github.com/charmbracelet/lipgloss v1.0.0
@@ -13,7 +14,6 @@ require (
 )
 
 require (
-	github.com/antchfx/xmlquery v1.5.0 // indirect
 	github.com/antchfx/xpath v1.3.5 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect

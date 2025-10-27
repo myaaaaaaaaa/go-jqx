@@ -21,6 +21,5 @@ func xmlQueryPath(xmlString, xpath string) (string, error) {
 	for _, node := range nodes {
 		sb.WriteString(node.OutputXML(true))
 	}
-
 	return sb.String(), nil
 }

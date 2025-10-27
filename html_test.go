@@ -45,7 +45,7 @@ func TestHTMLQuerySelector(t *testing.T) {
 	assert(`invalid[`, "error")
 }
 
-func TestHtmlExtract(t *testing.T) {
+func TestHTMLExtract(t *testing.T) {
 	assert := func(html, want string) {
 		t.Helper()
 		assertEqual(t, htmlExtract(html, "  TEXT  a  img  "), want)
@@ -168,7 +168,7 @@ func (b TokenFilterString) s() string {
 	)
 }
 
-func TestHtmlExtractProperties(t *testing.T) {
+func TestHTMLExtractProperties(t *testing.T) {
 	fuzz := func(name string, f any) {
 		t.Run(name, func(t *testing.T) {
 			if err := quick.Check(f, nil); err != nil {
@@ -255,7 +255,7 @@ func TestHtmlExtractProperties(t *testing.T) {
 			htmlExtract("", tokenFilter.s()) == ""
 	})
 }
-func TestExtractSequence(t *testing.T) {
+func TestHTMLExtractSequence(t *testing.T) {
 	assert := func(html, tokenFilter, want []byte) {
 		t.Helper()
 		assertEqual(t,
@@ -288,7 +288,7 @@ func isSubsequence(sub, super string) bool {
 	return i == len(sub)
 }
 
-func TestHtmlExtractModel(t *testing.T) {
+func TestHTMLExtractDifferential(t *testing.T) {
 	charExtract := func(s, charFilter string) string {
 		charSet := [128]bool{}
 		for _, c := range charFilter {

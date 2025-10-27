@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 	"testing/quick"
+
+	"github.com/myaaaaaaaaa/go-jqx/proptest"
 )
 
 func TestHTMLQuerySelector(t *testing.T) {
@@ -284,4 +286,60 @@ func isSubsequence(sub, super string) bool {
 		j++
 	}
 	return i == len(sub)
+}
+
+func TestHtmlExtractModel(t *testing.T) {
+	charExtract := func(s, charFilter string) string {
+		charSet := [128]bool{}
+		for _, c := range charFilter {
+			charSet[c] = true
+		}
+		return strings.Map(func(r rune) rune {
+			if charSet[r] {
+				return r
+			} else {
+				return -1
+			}
+		}, s)
+	}
+
+	htmlReplacer := strings.NewReplacer(
+		"1", `hello   world`,
+		"2", `<!-- a  comment -->`,
+		"3", `<p></p>`,
+		"4", `</div>`,
+		"5", `<span>`,
+		"6", `<a href="m.htm">`,
+		"7", `<img src="i.jpg"/>`,
+		"8", `<br/>`,
+		"9", `<hr/>`,
+	)
+	filterReplacer := strings.NewReplacer(
+		"1", `  TEXT  `,
+		"2", `  COMMENT  `,
+		"3", `  p  `,
+		"4", `  div  `,
+		"5", `  span  `,
+		"6", `  a  `,
+		"7", `  img  `,
+		"8", `  br  `,
+		"9", `  hr  `,
+	)
+
+	r := proptest.Rand(150)
+	for range 200 {
+		s := r.Chars("123456789")
+		charFilter := r.Chars("123456789")
+
+		want := htmlReplacer.Replace(charExtract(strings.Repeat(s, 4), charFilter))
+		got := strings.Repeat(htmlExtract(
+			htmlReplacer.Replace(s),
+			filterReplacer.Replace(charFilter),
+		), 4)
+
+		assertEqual(t, got, want)
+		if t.Failed() {
+			break
+		}
+	}
 }

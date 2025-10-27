@@ -6,6 +6,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/myaaaaaaaaa/go-jqx/proptest"
 )
 
 func TestCompile(t *testing.T) {
@@ -131,6 +133,12 @@ func TestTrim(t *testing.T) {
 		s += "a"
 
 		assertEqual(t, checkPagetrim(t, s), want)
+	}
+
+	r := proptest.Rand(10)
+	for range 200 {
+		s := r.Chars("ab  \t\r\n\n")
+		checkPagetrim(t, s)
 	}
 }
 

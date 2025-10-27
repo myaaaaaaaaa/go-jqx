@@ -16,7 +16,7 @@ func randString(r *rand.Rand, charSet string) string {
 func TestProperty(t *testing.T) {
 	r := rand.New(rand.NewPCG(1, 2))
 	for range 200 {
-		s := randString(r, "ab\n\n")
+		s := randString(r, "ab  \t\r\n\n")
 		checkPagetrim(t, s)
 	}
 }

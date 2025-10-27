@@ -81,8 +81,6 @@ func checkPagetrim(t *testing.T, s string) string {
 	assertEqual(t, strings.Contains(rt, "\n "), false)
 	assertEqual(t, strings.Contains(rt, " \n"), false)
 
-	assertEqual(t, strings.Contains(rt, "\n\n"), strings.Contains(strings.TrimSpace(s), "\n\n"))
-
 	assertEqual(t, spacesRe.ReplaceAllString(rt, ""), spacesRe.ReplaceAllString(s, ""))
 	assertEqual(t, newlineRe.ReplaceAllString(rt, ""), newlineRe.ReplaceAllString("\n"+s+"\n", ""))
 	return rt

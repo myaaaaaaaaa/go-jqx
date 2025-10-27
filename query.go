@@ -25,6 +25,17 @@ var builtins = must(gojq.Parse(`
 type constString string
 type FanOut func(any) iter.Seq[any]
 
+type sliceIter[T any] []T
+
+func (iter *sliceIter[T]) Next() (any, bool) {
+	if len(*iter) == 0 {
+		return nil, false
+	}
+	value := (*iter)[0]
+	*iter = (*iter)[1:]
+	return value, true
+}
+
 type nexter func() (any, bool)
 
 func (f nexter) Next() (any, bool) { return f() }
@@ -113,7 +124,8 @@ func htmlq(input any, args []any) gojq.Iter {
 	if err != nil {
 		return gojq.NewIter(err)
 	}
-	return gojq.NewIter(rt...)
+	rtSlice := sliceIter[string](rt)
+	return &rtSlice
 }
 func htmlt(input any, args []any) any {
 	rt := htmlExtract(input.(string), args[0].(string))

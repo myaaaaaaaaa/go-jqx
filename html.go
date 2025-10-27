@@ -9,7 +9,7 @@ import (
 	"golang.org/x/net/html"
 )
 
-func htmlQuerySelector(htmlString, cssSelector string) ([]any, error) {
+func htmlQuerySelector(htmlString, cssSelector string) ([]string, error) {
 	sel, err := cascadia.Parse(cssSelector)
 	if err != nil {
 		return nil, err
@@ -20,7 +20,7 @@ func htmlQuerySelector(htmlString, cssSelector string) ([]any, error) {
 
 	nodes := cascadia.QueryAll(doc, sel)
 
-	var rt []any
+	var rt []string
 	for _, node := range nodes {
 		var sb strings.Builder
 		must(0, html.Render(&sb, node))

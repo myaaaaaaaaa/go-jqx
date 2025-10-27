@@ -1,31 +1,22 @@
 package jqx
 
 import (
-	"math/rand"
-	"strings"
+	"math/rand/v2"
 	"testing"
 )
 
-const charSet = "ab\n"
-
-func generate(r *rand.Rand) string {
-	n := r.Intn(100)
-	var builder strings.Builder
-	for i := 0; i < n; i++ {
-		builder.WriteByte(charSet[r.Intn(len(charSet))])
+func randString(r *rand.Rand, charSet string) string {
+	rt := make([]byte, r.IntN(30))
+	for i := range rt {
+		rt[i] = charSet[r.IntN(len(charSet))]
 	}
-	return builder.String()
+	return string(rt)
 }
 
 func TestProperty(t *testing.T) {
-	r := rand.New(rand.NewSource(0))
-	for i := 0; i < 100; i++ {
-		s := generate(r)
-		for _, c := range s {
-			if !strings.ContainsRune(charSet, c) {
-				t.Fatalf("generated string %q contains invalid character %q", s, c)
-			}
-		}
+	r := rand.New(rand.NewPCG(1, 2))
+	for range 200 {
+		s := randString(r, "ab\n\n")
 		checkPagetrim(t, s)
 	}
 }

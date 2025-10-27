@@ -1,14 +1,30 @@
 package jqx
 
 import (
+	"strings"
 	"testing"
 )
+
+func checkXmlQueryPath(xmlString, xpath string) string {
+	rt := must(xmlQueryPath(xmlString, xpath))
+	r2 := must(xmlQueryPath(xmlString+xmlString, xpath))
+
+	if rt+rt != r2 {
+		panic(strings.Join([]string{
+			xmlString,
+			rt,
+			r2,
+		}, "\n"))
+	}
+
+	return rt
+}
 
 func TestXmlQueryPath(t *testing.T) {
 	xml := `<root><book><title>The Go Programming Language</title></book></root>`
 	xpath := "/root/book/title"
 
-	got := must(xmlQueryPath(xml, xpath))
+	got := checkXmlQueryPath(xml, xpath)
 	want := `<title>The Go Programming Language</title>`
 	assertEqual(t, got, want)
 }
@@ -17,7 +33,7 @@ func TestXmlQueryPath_NoResult(t *testing.T) {
 	xml := `<root><book><title>The Go Programming Language</title></book></root>`
 	xpath := "/root/book/author"
 
-	got := must(xmlQueryPath(xml, xpath))
+	got := checkXmlQueryPath(xml, xpath)
 	assertEqual(t, got, "")
 }
 
@@ -33,7 +49,7 @@ func TestXmlQueryPath_MultipleMatches(t *testing.T) {
 	xml := `<root><book><title>Title 1</title><title>Title 2</title></book></root>`
 	xpath := "/root/book/title"
 
-	got := must(xmlQueryPath(xml, xpath))
+	got := checkXmlQueryPath(xml, xpath)
 	want := `<title>Title 1</title><title>Title 2</title>`
 	assertEqual(t, got, want)
 }

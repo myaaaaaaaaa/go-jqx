@@ -59,8 +59,7 @@ type Program struct {
 	StdoutIsTerminal bool
 }
 type flags struct {
-	script    string
-	filenames []string
+	args []string
 
 	dry     bool
 	tab     bool
@@ -95,12 +94,7 @@ func (f *flags) populate(args []string) {
 	}
 
 	fset.Parse(args)
-
-	args = fset.Args()
-	f.script = "."
-	if len(args) > 0 {
-		f.script, f.filenames = args[0], args[1:]
-	}
+	f.args = fset.Args()
 }
 
 func (p *Program) Main() (rtErr error) {
@@ -109,8 +103,13 @@ func (p *Program) Main() (rtErr error) {
 	var f flags
 	f.populate(p.Args)
 
+	script, filenames := ".", f.args
+	if len(filenames) > 0 {
+		script, filenames = filenames[0], filenames[1:]
+	}
+
 	files := map[string]any{}
-	slices.Values(f.filenames)(func(filename string) bool {
+	slices.Values(filenames)(func(filename string) bool {
 		file, err := p.Open(filename)
 		failif(err, "loading")
 		defer file.Close()
@@ -175,7 +174,7 @@ func (p *Program) Main() (rtErr error) {
 		failif(err, "finding subdirs")
 		state.Globals["find"] = find
 	}
-	query := state.Compile(constString(f.script))
+	query := state.Compile(constString(script))
 	for v := range input {
 		for v := range query(v) {
 			v := marshal(v)

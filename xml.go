@@ -6,20 +6,20 @@ import (
 	"github.com/antchfx/xmlquery"
 )
 
-func xmlQueryPath(xmlString, xpath string) (string, error) {
+func xmlQueryPath(xmlString, xpath string) ([]string, error) {
 	doc, err := xmlquery.Parse(strings.NewReader(xmlString))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	nodes, err := xmlquery.QueryAll(doc, xpath)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	var sb strings.Builder
+	var rt []string
 	for _, node := range nodes {
-		sb.WriteString(node.OutputXML(true))
+		rt = append(rt, node.OutputXML(true))
 	}
-	return sb.String(), nil
+	return rt, nil
 }

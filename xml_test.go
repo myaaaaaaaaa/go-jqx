@@ -6,8 +6,8 @@ import (
 )
 
 func checkXmlQueryPath(xmlString, xpath string) string {
-	rt := must(xmlQueryPath(xmlString, xpath))
-	r2 := must(xmlQueryPath(xmlString+xmlString, xpath))
+	rt := strings.Join(must(xmlQueryPath(xmlString, xpath)), "")
+	r2 := strings.Join(must(xmlQueryPath(xmlString+xmlString, xpath)), "")
 
 	if rt+rt != r2 {
 		panic(strings.Join([]string{

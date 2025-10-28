@@ -118,6 +118,15 @@ func pagetrim(input any, _ []any) any {
 	return s
 }
 
+func xmlq(input any, args []any) gojq.Iter {
+	xpath := args[0]
+	rt, err := xmlQueryPath(input.(string), xpath.(string))
+	if err != nil {
+		return gojq.NewIter(err)
+	}
+	rtIter := sliceIter[string](rt)
+	return &rtIter
+}
 func htmlq(input any, args []any) gojq.Iter {
 	selector := args[0]
 	rt, err := htmlQuerySelector(input.(string), selector.(string))
@@ -163,6 +172,7 @@ func (s *State) Compile(code constString) FanOut {
 		gojq.WithFunction("sha256", 0, 0, hasher(sha256.New)),
 		gojq.WithFunction("sha512", 0, 0, hasher(sha512.New)),
 		gojq.WithFunction("pagetrim", 0, 0, pagetrim),
+		gojq.WithIterFunction("_xmlq", 1, 1, xmlq),
 		gojq.WithIterFunction("htmlq", 1, 1, htmlq),
 		gojq.WithFunction("_htmlt", 1, 1, htmlt),
 		gojq.WithVariables(globalKeys),

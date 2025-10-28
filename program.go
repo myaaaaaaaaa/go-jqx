@@ -48,9 +48,8 @@ func decoder(r io.Reader, name string) iter.Seq[any] {
 type Program struct {
 	Args []string
 
-	Open  func(string) (fs.File, error)
-	Find  func(string) fs.FS
-	OutFS fs.FS
+	Open func(string) (fs.File, error)
+	Find func(string) fs.FS
 
 	Stdin   io.Reader
 	Println func(string)
@@ -97,7 +96,7 @@ func (f *flags) populate(args []string) {
 	f.args = fset.Args()
 }
 
-func (p *Program) Main() (rtErr error) {
+func (p Program) Main() (fsys fs.FS, rtErr error) {
 	defer catch[failError](&rtErr)
 
 	var f flags
@@ -188,7 +187,9 @@ func (p *Program) Main() (rtErr error) {
 		}
 		state.Files = nil
 	}
-	p.OutFS = toFS(state.Files, getMarshaler(f.tab, !f.jsonOut))
 
-	return nil
+	fsys = toFS(state.Files, getMarshaler(f.tab, !f.jsonOut))
+	rtErr = nil
+
+	return
 }

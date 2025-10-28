@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"io/fs"
-	"slices"
 	"strings"
 	"testing"
 	"testing/fstest"
 )
 
-func testRun(t *testing.T, stdin, want string, p *Program) {
+func testRun(t *testing.T, stdin, want string, p *Program) fs.FS {
 	t.Helper()
 
 	var got bytes.Buffer
@@ -18,17 +17,19 @@ func testRun(t *testing.T, stdin, want string, p *Program) {
 	p.Stdin = bytes.NewBufferString(strings.ReplaceAll(stdin, " ", "\n"))
 	p.Println = func(s string) { fmt.Fprintln(&got, s) }
 
-	err := p.Main()
+	rt, err := p.Main()
 	if err != nil {
 		t.Log(err)
 		if want != "error" {
 			t.Fail()
 		}
-		return
+		return nil
 	}
 
 	want = strings.ReplaceAll(want, " ", "\n") + "\n"
 	assertEqual(t, got.String(), want)
+
+	return rt
 }
 
 func TestProgram(t *testing.T) {
@@ -110,19 +111,21 @@ func TestFS(t *testing.T) {
 	p.Args = []string{`$find | keys[]`}
 	testRun(t, "", "error", &p)
 
-	p.Args = slices.Insert(p.Args, 0, "-find", "x")
+	p.Args = []string{"-find", "x", `$find | keys[]`}
 	testRun(t, "", "d/ dd/ dd/a/ dd/a/d/ f ff/ ff/a/ ff/a/f", &p)
 }
 
 func TestDry(t *testing.T) {
 	const q = `snapshot("\(.).json"; [.])`
+	var fsys fs.FS
 	p := Program{}
+
 	ls := func() string {
-		rt := must(fs.Glob(p.OutFS, "*"))
+		rt := must(fs.Glob(fsys, "*"))
 		return strings.Join(rt, " ")
 	}
 	cat := func(filename string) string {
-		data, err := fs.ReadFile(p.OutFS, filename)
+		data, err := fs.ReadFile(fsys, filename)
 		if err != nil {
 			return "error"
 		}
@@ -131,17 +134,17 @@ func TestDry(t *testing.T) {
 
 	for range 3 {
 		p.Args = []string{"--dry-run", q}
-		testRun(t, `false`, `false false.json`, &p)
+		fsys = testRun(t, `false`, `false false.json`, &p)
 		assertEqual(t, ls(), "")
 		assertEqual(t, cat("false.json"), "error")
 
 		p.Args = []string{q}
-		testRun(t, `false`, `false`, &p)
+		fsys = testRun(t, `false`, `false`, &p)
 		assertEqual(t, ls(), "false.json")
 		assertEqual(t, cat("false.json"), "[false]")
 
 		p.Args = []string{"-t", q}
-		testRun(t, `false`, `false`, &p)
+		fsys = testRun(t, `false`, `false`, &p)
 		assertEqual(t, ls(), "false.json")
 		assertEqual(t, cat("false.json"), "[\n\tfalse\n]")
 	}

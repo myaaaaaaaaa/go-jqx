@@ -72,6 +72,7 @@ func main() {
 		}
 	}
 
-	try(prog.Main())
-	try(os.CopyFS(".", prog.OutFS))
+	fsys, err := prog.Main()
+	try(err)
+	try(os.CopyFS(".", fsys))
 }

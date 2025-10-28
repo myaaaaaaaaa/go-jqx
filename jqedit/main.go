@@ -49,7 +49,7 @@ func (d data) query() (string, error) {
 				err = fmt.Errorf("query panic: %v", r)
 			}
 		}()
-		err = prog.Main()
+		_, err = prog.Main()
 	}()
 	rt := output.String()
 

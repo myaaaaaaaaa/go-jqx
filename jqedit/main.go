@@ -23,24 +23,33 @@ import (
 	"github.com/myaaaaaaaaa/go-jqx"
 )
 
-const sampleJSON = `{"a":5,"b":"c","d":["e",true,-11.5,null,"f"],"g":{"h":"i","j":"k"},"l":null}`
+var jqInput = `{"a":5,"b":"c","d":["e",true,-11.5,null,"f"],"g":{"h":"i","j":"k"},"l":null}`
+var jqFiles []string
 
 type data struct {
-	input   string
-	code    string
+	code string
+
 	compact bool
+	raw     bool
 }
 
 func (d data) query() (string, error) {
 	var output bytes.Buffer
 
 	prog := jqx.Program{
-		Args:    []string{" " + d.code},
-		Stdin:   bytes.NewBufferString(d.input),
+		Stdin:   bytes.NewBufferString(jqInput),
 		Println: func(s string) { fmt.Fprintln(&output, s) },
+		Open:    func(f string) (fs.File, error) { return os.Open(f) },
 
 		StdoutIsTerminal: !d.compact,
 	}
+
+	if d.raw {
+		prog.Args = append(prog.Args, "-r")
+	}
+	prog.Args = append(prog.Args, " "+d.code)
+	prog.Args = append(prog.Args, jqFiles...)
+
 	var err error
 	func() {
 		defer func() {
@@ -283,13 +292,26 @@ func must[T any](val T, err error) T {
 
 func main() {
 	d := data{
-		input: sampleJSON,
-		code:  "#placeholder",
+		code: ".",
 	}
 
 	if !isTerminal(os.Stdin) {
-		d.input = string(must(io.ReadAll(os.Stdin)))
+		jqInput = string(must(io.ReadAll(os.Stdin)))
 	}
+
+	if _, err := d.query(); err != nil {
+		fmt.Fprintln(os.Stderr, errorStyle.Render(err.Error()))
+		return
+	}
+
+	jqFiles = os.Args[1:]
+	if len(jqFiles) > 0 {
+		if _, err := d.query(); err != nil {
+			d.raw = true
+		}
+	}
+
+	d.code = "#placeholder"
 
 	lipgloss.SetDefaultRenderer(lipgloss.NewRenderer(os.Stderr))
 

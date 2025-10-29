@@ -124,6 +124,17 @@ func tlink(name, url string) string {
 	return "\033]8;;" + url + "\033\\" + name + "\033]8;;\033\\"
 }
 
+var doSave = func(contents string) (msg string, err error) {
+	fname := fmt.Sprintf("jq-%d.txt", uptime())
+
+	outFile := cmp.Or(os.Getenv("XDG_RUNTIME_DIR"), "/tmp")
+	outFile = path.Join(outFile, fname)
+
+	msg = "saved to " + tlink(outFile, "file://"+outFile)
+	err = os.WriteFile(outFile, []byte(contents), 0666)
+	return
+}
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	oldData := m.d
 
@@ -145,16 +156,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case saveMsg:
-		fname := fmt.Sprintf("jq-%d.txt", uptime())
-
-		outFile := cmp.Or(os.Getenv("XDG_RUNTIME_DIR"), "/tmp")
-		outFile = path.Join(outFile, fname)
-
-		m.err = os.WriteFile(outFile, []byte(m.vcontent), 0666)
+		var result string
+		result, m.err = doSave(m.vcontent)
 		if m.err == nil {
-			return m, tea.Printf("    saved to %s", tlink(outFile, "file://"+outFile))
+			return m, tea.Println("    " + result)
 		}
-
 		return m, nil
 	case tabMsg:
 		m.d.compact = !m.d.compact

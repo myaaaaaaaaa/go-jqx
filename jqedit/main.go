@@ -89,14 +89,11 @@ type model struct {
 	err error
 }
 
-func newModel(text string) model {
+func newModel(d data) model {
 	rt := model{
 		textarea: textarea.New(),
 		viewport: viewport.New(10, 10),
-		d: data{
-			input: text,
-			code:  "#placeholder",
-		},
+		d:        d,
 	}
 
 	rt.textarea.SetHeight(3)
@@ -285,9 +282,13 @@ func must[T any](val T, err error) T {
 }
 
 func main() {
-	text := sampleJSON
+	d := data{
+		input: sampleJSON,
+		code:  "#placeholder",
+	}
+
 	if !isTerminal(os.Stdin) {
-		text = string(must(io.ReadAll(os.Stdin)))
+		d.input = string(must(io.ReadAll(os.Stdin)))
 	}
 
 	lipgloss.SetDefaultRenderer(lipgloss.NewRenderer(os.Stderr))
@@ -302,7 +303,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, s)
 	}
 
-	p := tea.NewProgram(newModel(text),
+	p := tea.NewProgram(newModel(d),
 		tea.WithFilter(msgFilter),
 		tea.WithMouseCellMotion(),
 		tea.WithOutput(os.Stderr),

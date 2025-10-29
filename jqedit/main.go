@@ -251,13 +251,7 @@ func isTerminal(f fs.File) bool {
 var logged = map[string]bool{}
 
 func logScript(code string) tea.Cmd {
-	{
-		q, err := gojq.Parse(code)
-		if err != nil {
-			panic(err)
-		}
-		code = q.String()
-	}
+	code = must(gojq.Parse(code)).String()
 
 	if logged[code] {
 		return nil
@@ -283,14 +277,17 @@ func msgFilter(m tea.Model, msg tea.Msg) tea.Msg {
 	return msg
 }
 
+func must[T any](val T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return val
+}
+
 func main() {
 	text := sampleJSON
 	if !isTerminal(os.Stdin) {
-		b, err := io.ReadAll(os.Stdin)
-		if err != nil {
-			panic(err)
-		}
-		text = string(b)
+		text = string(must(io.ReadAll(os.Stdin)))
 	}
 
 	lipgloss.SetDefaultRenderer(lipgloss.NewRenderer(os.Stderr))
@@ -311,10 +308,7 @@ func main() {
 		tea.WithOutput(os.Stderr),
 	)
 
-	m, err := p.Run()
-	if err != nil {
-		panic(err)
-	}
+	m := must(p.Run())
 
 	if !isTerminal(os.Stdout) {
 		m := m.(emptyModel).Model.(model)

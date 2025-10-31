@@ -23,7 +23,9 @@ import (
 	"github.com/myaaaaaaaaa/go-jqx"
 )
 
-var jqInput = `{"a":5,"b":"c","d":["e",true,-11.5,null,"f"],"g":{"h":"i","j":"k"},"l":null}`
+const sampleJSON = `{"a":5,"b":"c","d":["e",true,-11.5,null,"f"],"g":{"h":"i","j":"k"},"l":null}`
+
+var jqInput string
 var jqFiles []string
 
 type data struct {
@@ -36,11 +38,21 @@ type data struct {
 func (d data) query() (string, error) {
 	var output bytes.Buffer
 
+	filesVarInput := false
+	inputString := jqInput
+	if inputString == "" {
+		inputString = sampleJSON
+		if len(jqFiles) > 0 {
+			filesVarInput = true
+		}
+	}
+
 	prog := jqx.Program{
-		Stdin:   bytes.NewBufferString(jqInput),
+		Stdin:   bytes.NewBufferString(inputString),
 		Println: func(s string) { fmt.Fprintln(&output, s) },
 		Open:    func(f string) (fs.File, error) { return os.Open(f) },
 
+		StdinIsTerminal:  filesVarInput,
 		StdoutIsTerminal: !d.compact,
 	}
 

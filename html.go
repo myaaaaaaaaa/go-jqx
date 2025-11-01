@@ -109,3 +109,7 @@ func htmlReplaceSelector(htmlString, cssSelector, replacement string) (string, e
 	must(0, html.Render(&sb, doc))
 	return sb.String(), nil
 }
+
+func htmlDeleteSelector(htmlString, cssSelector string) (string, error) {
+	return htmlReplaceSelector(htmlString, cssSelector, "")
+}

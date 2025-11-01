@@ -28,6 +28,29 @@ func htmlQuerySelector(htmlString, cssSelector string) ([]string, error) {
 	}
 	return rt, nil
 }
+func htmlReplaceSelector(htmlString, cssSelector, replacement string) (string, error) {
+	sel, err := cascadia.Parse(cssSelector)
+	if err != nil {
+		return "", err
+	}
+
+	doc := must(html.Parse(strings.NewReader(htmlString)))
+
+	nodes := cascadia.QueryAll(doc, sel)
+
+	for _, node := range nodes {
+		replaceNode := &html.Node{
+			Type: html.RawNode,
+			Data: replacement,
+		}
+		node.Parent.InsertBefore(replaceNode, node)
+		node.Parent.RemoveChild(node)
+	}
+
+	var sb strings.Builder
+	must(0, html.Render(&sb, doc))
+	return sb.String(), nil
+}
 
 func htmlExtract(htmlString, tokenFilter string) string {
 	tokenizer := html.NewTokenizer(strings.NewReader(htmlString))
@@ -84,32 +107,4 @@ func htmlExtract(htmlString, tokenFilter string) string {
 	}
 
 	return sb.String()
-}
-
-func htmlReplaceSelector(htmlString, cssSelector, replacement string) (string, error) {
-	sel, err := cascadia.Parse(cssSelector)
-	if err != nil {
-		return "", err
-	}
-
-	doc := must(html.Parse(strings.NewReader(htmlString)))
-
-	nodes := cascadia.QueryAll(doc, sel)
-
-	for _, node := range nodes {
-		replaceNode := &html.Node{
-			Type: html.RawNode,
-			Data: replacement,
-		}
-		node.Parent.InsertBefore(replaceNode, node)
-		node.Parent.RemoveChild(node)
-	}
-
-	var sb strings.Builder
-	must(0, html.Render(&sb, doc))
-	return sb.String(), nil
-}
-
-func htmlDeleteSelector(htmlString, cssSelector string) (string, error) {
-	return htmlReplaceSelector(htmlString, cssSelector, "")
 }

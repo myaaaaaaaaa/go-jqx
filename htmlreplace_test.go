@@ -4,6 +4,13 @@ import (
 	"testing"
 )
 
+func checkHTMLReplaceSelector(htmlString, cssSelector, replacement string) (string, error) {
+	return htmlReplaceSelector(htmlString, cssSelector, replacement)
+}
+func checkHTMLDeleteSelector(htmlString, cssSelector string) (string, error) {
+	return htmlReplaceSelector(htmlString, cssSelector, "")
+}
+
 func TestHtmlReplaceSelector(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -45,7 +52,7 @@ func TestHtmlReplaceSelector(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := htmlReplaceSelector(tt.html, tt.selector, tt.replacement)
+			actual, err := checkHTMLReplaceSelector(tt.html, tt.selector, tt.replacement)
 
 			if (err != nil) != tt.expectedError {
 				t.Fatalf("expected error: %v, got: %v", tt.expectedError, err)
@@ -57,7 +64,6 @@ func TestHtmlReplaceSelector(t *testing.T) {
 		})
 	}
 }
-
 func TestHtmlDeleteSelector(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -94,7 +100,7 @@ func TestHtmlDeleteSelector(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := htmlDeleteSelector(tt.html, tt.selector)
+			actual, err := checkHTMLDeleteSelector(tt.html, tt.selector)
 
 			if (err != nil) != tt.expectedError {
 				t.Fatalf("expected error: %v, got: %v", tt.expectedError, err)

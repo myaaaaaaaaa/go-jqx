@@ -85,3 +85,36 @@ func htmlExtract(htmlString, tokenFilter string) string {
 
 	return sb.String()
 }
+
+func htmlReplaceSelector(htmlString, cssSelector, replacement string) (string, error) {
+	sel, err := cascadia.Parse(cssSelector)
+	if err != nil {
+		return "", err
+	}
+
+	doc, err := html.Parse(strings.NewReader(htmlString))
+	if err != nil {
+		return "", err
+	}
+
+	nodes := cascadia.QueryAll(doc, sel)
+	if len(nodes) == 0 {
+		return htmlString, nil
+	}
+
+	for _, node := range nodes {
+		replaceNode := &html.Node{
+			Type: html.RawNode,
+			Data: replacement,
+		}
+		node.Parent.InsertBefore(replaceNode, node)
+		node.Parent.RemoveChild(node)
+	}
+
+	var sb strings.Builder
+	if err := html.Render(&sb, doc); err != nil {
+		return "", err
+	}
+
+	return sb.String(), nil
+}

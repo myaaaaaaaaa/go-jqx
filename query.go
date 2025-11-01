@@ -19,7 +19,7 @@ import (
 
 var builtins = must(gojq.Parse(`
 	def shuffle: shuffle("A seed");
-	def htmlt:   _htmlt("TEXT");
+	def htmlt:   htmlt("TEXT");
 `)).FuncDefs
 
 type constString string
@@ -127,7 +127,7 @@ func xmlq(input any, args []any) gojq.Iter {
 	rtIter := sliceIter[string](rt)
 	return &rtIter
 }
-func htmlq(input any, args []any) gojq.Iter {
+func htmlq1(input any, args []any) gojq.Iter {
 	selector := args[0]
 	rt, err := htmlQuerySelector(input.(string), selector.(string))
 	if err != nil {
@@ -135,6 +135,17 @@ func htmlq(input any, args []any) gojq.Iter {
 	}
 	rtSlice := sliceIter[string](rt)
 	return &rtSlice
+}
+func htmlq2(input any, args []any) gojq.Iter {
+	rt, err := htmlReplaceSelector(
+		input.(string),
+		args[0].(string),
+		args[1].(string),
+	)
+	if err != nil {
+		return gojq.NewIter(err)
+	}
+	return gojq.NewIter(rt)
 }
 func htmlt(input any, args []any) any {
 	rt := htmlExtract(input.(string), args[0].(string))
@@ -172,9 +183,10 @@ func (s *State) Compile(code constString) FanOut {
 		gojq.WithFunction("sha256", 0, 0, hasher(sha256.New)),
 		gojq.WithFunction("sha512", 0, 0, hasher(sha512.New)),
 		gojq.WithFunction("pagetrim", 0, 0, pagetrim),
-		gojq.WithIterFunction("_xmlq", 1, 1, xmlq),
-		gojq.WithIterFunction("htmlq", 1, 1, htmlq),
-		gojq.WithFunction("_htmlt", 1, 1, htmlt),
+		gojq.WithIterFunction("xmlq", 1, 1, xmlq),
+		gojq.WithIterFunction("htmlq", 1, 1, htmlq1),
+		gojq.WithIterFunction("htmlq", 2, 2, htmlq2),
+		gojq.WithFunction("htmlt", 1, 1, htmlt),
 		gojq.WithVariables(globalKeys),
 	)
 	failif(err, "compiling query")

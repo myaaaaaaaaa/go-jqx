@@ -32,7 +32,7 @@ func TestHtmlReplaceSelector(t *testing.T) {
 			html:        `<html><body><div><p>hello</p></div></body></html>`,
 			selector:    "span",
 			replacement: "<span>world</span>",
-			expected:    `<html><body><div><p>hello</p></div></body></html>`,
+			expected:    `<html><head></head><body><div><p>hello</p></div></body></html>`,
 		},
 		{
 			name:          "invalid selector",

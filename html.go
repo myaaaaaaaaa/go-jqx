@@ -92,15 +92,9 @@ func htmlReplaceSelector(htmlString, cssSelector, replacement string) (string, e
 		return "", err
 	}
 
-	doc, err := html.Parse(strings.NewReader(htmlString))
-	if err != nil {
-		return "", err
-	}
+	doc := must(html.Parse(strings.NewReader(htmlString)))
 
 	nodes := cascadia.QueryAll(doc, sel)
-	if len(nodes) == 0 {
-		return htmlString, nil
-	}
 
 	for _, node := range nodes {
 		replaceNode := &html.Node{
@@ -112,9 +106,6 @@ func htmlReplaceSelector(htmlString, cssSelector, replacement string) (string, e
 	}
 
 	var sb strings.Builder
-	if err := html.Render(&sb, doc); err != nil {
-		return "", err
-	}
-
+	must(0, html.Render(&sb, doc))
 	return sb.String(), nil
 }

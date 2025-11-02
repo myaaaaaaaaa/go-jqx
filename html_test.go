@@ -5,8 +5,21 @@ import (
 	"testing"
 )
 
+func TestHTMLError(t *testing.T) {
+	const html = `<html><body><div><p>hello</p></div></body></html>`
+	var err error
+
+	must(htmlQuerySelector(html, `valid`))
+	must(htmlReplaceSelector(html, `valid`, ""))
+
+	_, err = htmlQuerySelector(html, `invalid[`)
+	assertEqual(t, err != nil, true)
+	_, err = htmlReplaceSelector(html, `invalid[`, "")
+	assertEqual(t, err != nil, true)
+}
+
 func TestHTMLQuerySelector(t *testing.T) {
-	html := `
+	const html = `
 		<html>
 			<body>
 				<h1 class="header">Title</h1>
@@ -23,38 +36,30 @@ func TestHTMLQuerySelector(t *testing.T) {
 	assert := func(selector, want string) {
 		t.Helper()
 
-		if want == "error" {
-			_, err := htmlQuerySelector(html, selector)
-			assertEqual(t, err != nil, true)
-		} else {
-			got := slices.Collect(query(selector))
-			assertEqual(t, len(got), 1)
-			assertString(t, got[0], want)
-		}
+		got := slices.Collect(query(selector))
+		assertEqual(t, len(got), 1)
+		assertString(t, got[0], want)
 	}
 
 	assert(`.content`, `<p class="content">Second paragraph.</p>`)
 	assert(`h1`, `<h1 class="header">Title</h1>`)
 	assert(`p`, `<p>First paragraph.</p>  ;  <p class="content">Second paragraph.</p>`)
-
-	assert(`invalid[`, "error")
 }
 
-func checkHTMLReplaceSelector(htmlString, cssSelector, replacement string) (string, error) {
-	return htmlReplaceSelector(htmlString, cssSelector, replacement)
+func checkHTMLReplaceSelector(htmlString, cssSelector, replacement string) string {
+	return must(htmlReplaceSelector(htmlString, cssSelector, replacement))
 }
-func checkHTMLDeleteSelector(htmlString, cssSelector string) (string, error) {
-	return htmlReplaceSelector(htmlString, cssSelector, "")
+func checkHTMLDeleteSelector(htmlString, cssSelector string) string {
+	return must(htmlReplaceSelector(htmlString, cssSelector, ""))
 }
 
 func TestHtmlReplaceSelector(t *testing.T) {
 	tests := []struct {
-		name          string
-		html          string
-		selector      string
-		replacement   string
-		expected      string
-		expectedError bool
+		name        string
+		html        string
+		selector    string
+		replacement string
+		expected    string
 	}{
 		{
 			name:        "simple replace",
@@ -84,36 +89,21 @@ func TestHtmlReplaceSelector(t *testing.T) {
 			replacement: "<span>world</span>",
 			expected:    `<html><head></head><body><div><p>hello</p></div></body></html>`,
 		},
-		{
-			name:          "invalid selector",
-			html:          `<html><body><div><p>hello</p></div></body></html>`,
-			selector:      "[",
-			replacement:   "<span>world</span>",
-			expectedError: true,
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := checkHTMLReplaceSelector(tt.html, tt.selector, tt.replacement)
-
-			if (err != nil) != tt.expectedError {
-				t.Fatalf("expected error: %v, got: %v", tt.expectedError, err)
-			}
-
-			if !tt.expectedError && actual != tt.expected {
-				t.Fatalf("expected:\n%s\ngot:\n%s", tt.expected, actual)
-			}
+			actual := checkHTMLReplaceSelector(tt.html, tt.selector, tt.replacement)
+			assertEqual(t, actual, tt.expected)
 		})
 	}
 }
 func TestHtmlDeleteSelector(t *testing.T) {
 	tests := []struct {
-		name          string
-		html          string
-		selector      string
-		expected      string
-		expectedError bool
+		name     string
+		html     string
+		selector string
+		expected string
 	}{
 		{
 			name:     "simple delete",
@@ -133,25 +123,12 @@ func TestHtmlDeleteSelector(t *testing.T) {
 			selector: "span",
 			expected: `<html><head></head><body><div><p>hello</p></div></body></html>`,
 		},
-		{
-			name:          "invalid selector",
-			html:          `<html><body><div><p>hello</p></div></body></html>`,
-			selector:      "[",
-			expectedError: true,
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := checkHTMLDeleteSelector(tt.html, tt.selector)
-
-			if (err != nil) != tt.expectedError {
-				t.Fatalf("expected error: %v, got: %v", tt.expectedError, err)
-			}
-
-			if !tt.expectedError && actual != tt.expected {
-				t.Fatalf("expected:\n%s\ngot:\n%s", tt.expected, actual)
-			}
+			actual := checkHTMLDeleteSelector(tt.html, tt.selector)
+			assertEqual(t, actual, tt.expected)
 		})
 	}
 }

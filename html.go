@@ -53,7 +53,7 @@ func htmlReplaceSelector(htmlString, cssSelector, replacement string) (string, e
 	return sb.String(), nil
 }
 
-func htmlExtract(htmlString, tokenFilter string) string {
+func htmlTokenize(htmlString, tokenFilter string) string {
 	tokenizer := html.NewTokenizer(strings.NewReader(htmlString))
 	var sb strings.Builder
 

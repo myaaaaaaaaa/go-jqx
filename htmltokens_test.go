@@ -9,10 +9,10 @@ import (
 	"github.com/myaaaaaaaaa/go-jqx/proptest"
 )
 
-func TestHTMLExtract(t *testing.T) {
+func TestHTMLTokenize(t *testing.T) {
 	assert := func(html, want string) {
 		t.Helper()
-		assertEqual(t, htmlExtract(html, "  TEXT  a  img  "), want)
+		assertEqual(t, htmlTokenize(html, "  TEXT  a  img  "), want)
 	}
 
 	assert(
@@ -29,20 +29,20 @@ func TestHTMLExtract(t *testing.T) {
 		commentText := strings.Repeat("<!-- comment -->", i)
 		plainText := strings.Repeat("text", i)
 
-		assertEqual(t, htmlExtract(fullText, "  TEXT  "), plainText)
-		assertEqual(t, htmlExtract(fullText, "  TEXT  COMMENT  "), fullText)
-		assertEqual(t, htmlExtract(fullText, "  COMMENT  "), commentText)
-		assertEqual(t, htmlExtract(fullText, "    "), "")
+		assertEqual(t, htmlTokenize(fullText, "  TEXT  "), plainText)
+		assertEqual(t, htmlTokenize(fullText, "  TEXT  COMMENT  "), fullText)
+		assertEqual(t, htmlTokenize(fullText, "  COMMENT  "), commentText)
+		assertEqual(t, htmlTokenize(fullText, "    "), "")
 
-		assertEqual(t, htmlExtract(commentText, "  TEXT  COMMENT  "), commentText)
-		assertEqual(t, htmlExtract(commentText, "  TEXT  "), "")
-		assertEqual(t, htmlExtract(commentText, "  COMMENT  "), commentText)
-		assertEqual(t, htmlExtract(commentText, "    "), "")
+		assertEqual(t, htmlTokenize(commentText, "  TEXT  COMMENT  "), commentText)
+		assertEqual(t, htmlTokenize(commentText, "  TEXT  "), "")
+		assertEqual(t, htmlTokenize(commentText, "  COMMENT  "), commentText)
+		assertEqual(t, htmlTokenize(commentText, "    "), "")
 
-		assertEqual(t, htmlExtract(plainText, "  TEXT  COMMENT  "), plainText)
-		assertEqual(t, htmlExtract(plainText, "  TEXT  "), plainText)
-		assertEqual(t, htmlExtract(plainText, "  COMMENT  "), "")
-		assertEqual(t, htmlExtract(plainText, "    "), "")
+		assertEqual(t, htmlTokenize(plainText, "  TEXT  COMMENT  "), plainText)
+		assertEqual(t, htmlTokenize(plainText, "  TEXT  "), plainText)
+		assertEqual(t, htmlTokenize(plainText, "  COMMENT  "), "")
+		assertEqual(t, htmlTokenize(plainText, "    "), "")
 	}
 
 	for i := range 8 {
@@ -50,20 +50,20 @@ func TestHTMLExtract(t *testing.T) {
 		htmlText := strings.Repeat("<p>hello  world</p>", i)
 		pText := strings.Repeat("<p></p>", i)
 
-		assertEqual(t, htmlExtract(plainText, "  TEXT  "), plainText)
-		assertEqual(t, htmlExtract(plainText, "  TEXT  p  "), plainText)
-		assertEqual(t, htmlExtract(plainText, "  p  "), "")
-		assertEqual(t, htmlExtract(plainText, "   "), "")
+		assertEqual(t, htmlTokenize(plainText, "  TEXT  "), plainText)
+		assertEqual(t, htmlTokenize(plainText, "  TEXT  p  "), plainText)
+		assertEqual(t, htmlTokenize(plainText, "  p  "), "")
+		assertEqual(t, htmlTokenize(plainText, "   "), "")
 
-		assertEqual(t, htmlExtract(htmlText, "  TEXT  "), plainText)
-		assertEqual(t, htmlExtract(htmlText, "  TEXT  p  "), htmlText)
-		assertEqual(t, htmlExtract(htmlText, "  p  "), pText)
-		assertEqual(t, htmlExtract(htmlText, "   "), "")
+		assertEqual(t, htmlTokenize(htmlText, "  TEXT  "), plainText)
+		assertEqual(t, htmlTokenize(htmlText, "  TEXT  p  "), htmlText)
+		assertEqual(t, htmlTokenize(htmlText, "  p  "), pText)
+		assertEqual(t, htmlTokenize(htmlText, "   "), "")
 
-		assertEqual(t, htmlExtract(pText, "  TEXT  "), "")
-		assertEqual(t, htmlExtract(pText, "  TEXT  p  "), pText)
-		assertEqual(t, htmlExtract(pText, "  p  "), pText)
-		assertEqual(t, htmlExtract(pText, "   "), "")
+		assertEqual(t, htmlTokenize(pText, "  TEXT  "), "")
+		assertEqual(t, htmlTokenize(pText, "  TEXT  p  "), pText)
+		assertEqual(t, htmlTokenize(pText, "  p  "), pText)
+		assertEqual(t, htmlTokenize(pText, "   "), "")
 	}
 
 	abc := ""
@@ -76,9 +76,9 @@ func TestHTMLExtract(t *testing.T) {
 		want := strings.Join(s, "")
 		html := strings.Join(s, "<br/>")
 
-		assertEqual(t, htmlExtract(html, "  TEXT  "), abc)
-		assertEqual(t, htmlExtract(html, "  TEXT  hr  "), want)
-		assertEqual(t, htmlExtract(html, "  TEXT  br  hr  "), html)
+		assertEqual(t, htmlTokenize(html, "  TEXT  "), abc)
+		assertEqual(t, htmlTokenize(html, "  TEXT  hr  "), want)
+		assertEqual(t, htmlTokenize(html, "  TEXT  br  hr  "), html)
 	}
 }
 
@@ -110,7 +110,7 @@ func (b HTMLString) s() string {
 	)
 }
 
-// A string that is a valid set of arguments for htmlExtract.
+// A string that is a valid set of arguments for htmlTokenize.
 type TokenFilterString []byte
 
 func (b *TokenFilterString) trim(n int) {
@@ -132,7 +132,7 @@ func (b TokenFilterString) s() string {
 	)
 }
 
-func TestHTMLExtractProperties(t *testing.T) {
+func TestHTMLTokenizeProperties(t *testing.T) {
 	fuzz := func(name string, f any) {
 		t.Run(name, func(t *testing.T) {
 			if err := quick.Check(f, nil); err != nil {
@@ -143,16 +143,16 @@ func TestHTMLExtractProperties(t *testing.T) {
 
 	fuzz("concatenation", func(html1, html2 HTMLString, tokenFilter TokenFilterString) bool {
 		tokenFilter.trim(3)
-		want := htmlExtract(html1.s(), tokenFilter.s()) + htmlExtract(html2.s(), tokenFilter.s())
-		got := htmlExtract(html1.s()+html2.s(), tokenFilter.s())
+		want := htmlTokenize(html1.s(), tokenFilter.s()) + htmlTokenize(html2.s(), tokenFilter.s())
+		got := htmlTokenize(html1.s()+html2.s(), tokenFilter.s())
 		return want == got
 	})
 	fuzz("inequality", func(html HTMLString, tokenFilter TokenFilterString) bool {
 		for i := range tokenFilter {
 			tokenFilter := tokenFilter[i : i+1]
-			a := htmlExtract(html.s(), tokenFilter.s())
+			a := htmlTokenize(html.s(), tokenFilter.s())
 			tokenFilter[0]++
-			b := htmlExtract(html.s(), tokenFilter.s())
+			b := htmlTokenize(html.s(), tokenFilter.s())
 
 			if a != "" && a == b {
 				return false
@@ -169,23 +169,23 @@ func TestHTMLExtractProperties(t *testing.T) {
 	fuzz("sets", func(html HTMLString, tokenFilter1, tokenFilter2 TokenFilterString) bool {
 		tokenFilter1.trim(5)
 		tokenFilter2.trim(5)
-		output1 := htmlExtract(html.s(), tokenFilter1.s())
-		output2 := htmlExtract(html.s(), tokenFilter2.s())
-		outputIntersect := htmlExtract(output1, tokenFilter2.s())
-		outputUnion := htmlExtract(html.s(), tokenFilter1.s()+tokenFilter2.s())
-		return htmlExtract(output2, tokenFilter1.s()) == outputIntersect &&
-			htmlExtract(output1, tokenFilter2.s()) == outputIntersect &&
-			htmlExtract(outputUnion, tokenFilter1.s()) == output1 &&
-			htmlExtract(outputUnion, tokenFilter2.s()) == output2 &&
-			htmlExtract(outputIntersect, tokenFilter1.s()) == outputIntersect &&
-			htmlExtract(outputIntersect, tokenFilter2.s()) == outputIntersect &&
-			htmlExtract(outputIntersect, tokenFilter1.s()+tokenFilter2.s()) == outputIntersect
+		output1 := htmlTokenize(html.s(), tokenFilter1.s())
+		output2 := htmlTokenize(html.s(), tokenFilter2.s())
+		outputIntersect := htmlTokenize(output1, tokenFilter2.s())
+		outputUnion := htmlTokenize(html.s(), tokenFilter1.s()+tokenFilter2.s())
+		return htmlTokenize(output2, tokenFilter1.s()) == outputIntersect &&
+			htmlTokenize(output1, tokenFilter2.s()) == outputIntersect &&
+			htmlTokenize(outputUnion, tokenFilter1.s()) == output1 &&
+			htmlTokenize(outputUnion, tokenFilter2.s()) == output2 &&
+			htmlTokenize(outputIntersect, tokenFilter1.s()) == outputIntersect &&
+			htmlTokenize(outputIntersect, tokenFilter2.s()) == outputIntersect &&
+			htmlTokenize(outputIntersect, tokenFilter1.s()+tokenFilter2.s()) == outputIntersect
 	})
 
 	fuzz("idempotency", func(html HTMLString, tokenFilter TokenFilterString) bool {
 		tokenFilter.trim(3)
-		want := htmlExtract(html.s(), tokenFilter.s())
-		got := htmlExtract(want, tokenFilter.s())
+		want := htmlTokenize(html.s(), tokenFilter.s())
+		got := htmlTokenize(want, tokenFilter.s())
 		return want == got
 	})
 
@@ -193,8 +193,8 @@ func TestHTMLExtractProperties(t *testing.T) {
 		tokenFilter1.trim(2)
 		tokenFilter2.trim(3)
 		tokenFilter3.trim(2)
-		outputA := htmlExtract(html.s(), tokenFilter2.s())
-		outputB := htmlExtract(html.s(), tokenFilter1.s()+tokenFilter2.s()+tokenFilter3.s())
+		outputA := htmlTokenize(html.s(), tokenFilter2.s())
+		outputB := htmlTokenize(html.s(), tokenFilter1.s()+tokenFilter2.s()+tokenFilter3.s())
 		return isSubsequence(outputA, outputB) &&
 			isSubsequence(outputA, html.s()) &&
 			isSubsequence(outputB, html.s())
@@ -209,21 +209,21 @@ func TestHTMLExtractProperties(t *testing.T) {
 		for i := range html {
 			html[i] = tokenFilter[int(html[i])%len(tokenFilter)]
 		}
-		return htmlExtract(html.s(), tokenFilter.s()) == html.s()
+		return htmlTokenize(html.s(), tokenFilter.s()) == html.s()
 	})
 
 	fuzz("misc_basic", func(html HTMLString, tokenFilter TokenFilterString) bool {
 		tokenFilter.trim(3)
-		return len(htmlExtract(html.s(), tokenFilter.s())) <= len(html.s()) &&
-			htmlExtract(html.s(), " ") == "" &&
-			htmlExtract("", tokenFilter.s()) == ""
+		return len(htmlTokenize(html.s(), tokenFilter.s())) <= len(html.s()) &&
+			htmlTokenize(html.s(), " ") == "" &&
+			htmlTokenize("", tokenFilter.s()) == ""
 	})
 }
-func TestHTMLExtractSequence(t *testing.T) {
+func TestHTMLTokenizeSequence(t *testing.T) {
 	assert := func(html, tokenFilter, want []byte) {
 		t.Helper()
 		assertEqual(t,
-			htmlExtract(
+			htmlTokenize(
 				HTMLString(html).s(),
 				TokenFilterString(tokenFilter).s(),
 			),
@@ -252,7 +252,7 @@ func isSubsequence(sub, super string) bool {
 	return i == len(sub)
 }
 
-func TestHTMLExtractDifferential(t *testing.T) {
+func TestHTMLTokenizeDifferential(t *testing.T) {
 	charExtract := func(s, charFilter string) string {
 		charSet := [128]bool{}
 		for _, c := range charFilter {
@@ -296,7 +296,7 @@ func TestHTMLExtractDifferential(t *testing.T) {
 		charFilter := r.Chars("123456789")
 
 		want := htmlReplacer.Replace(charExtract(strings.Repeat(s, 4), charFilter))
-		got := strings.Repeat(htmlExtract(
+		got := strings.Repeat(htmlTokenize(
 			htmlReplacer.Replace(s),
 			filterReplacer.Replace(charFilter),
 		), 4)

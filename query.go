@@ -148,7 +148,7 @@ func htmlq2(input any, args []any) gojq.Iter {
 	return gojq.NewIter(rt)
 }
 func htmlt(input any, args []any) any {
-	rt := htmlExtract(input.(string), args[0].(string))
+	rt := htmlTokenize(input.(string), args[0].(string))
 	return rt
 }
 

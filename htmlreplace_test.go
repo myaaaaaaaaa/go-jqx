@@ -35,6 +35,13 @@ func TestHtmlReplaceSelector(t *testing.T) {
 			expected:    `<html><head></head><body><ul><p>replaced</p><p>replaced</p></ul></body></html>`,
 		},
 		{
+			name:        "template",
+			html:        `<html><body><ul><li>1</li><li>2</li></ul></body></html>`,
+			selector:    "li",
+			replacement: "  <>  ",
+			expected:    `<html><head></head><body><ul>  <li>1</li>    <li>2</li>  </ul></body></html>`,
+		},
+		{
 			name:        "no match",
 			html:        `<html><body><div><p>hello</p></div></body></html>`,
 			selector:    "span",

@@ -33,8 +33,17 @@ func htmlReplaceSelector(htmlString, cssSelector, replacement string) (string, e
 	}
 
 	doc := must(html.Parse(strings.NewReader(htmlString)))
+	replaceSplit := strings.Split(replacement, "<>")
 
 	for _, node := range cascadia.QueryAll(doc, sel) {
+		replacement := replacement
+
+		if len(replaceSplit) > 1 {
+			var orig strings.Builder
+			must(0, html.Render(&orig, node))
+			replacement = strings.Join(replaceSplit, orig.String())
+		}
+
 		node.Type = html.RawNode
 		node.Data = replacement
 	}

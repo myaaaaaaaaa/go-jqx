@@ -18,10 +18,8 @@ func htmlQuerySelector(htmlString, cssSelector string) ([]string, error) {
 	// Lenient parser, only relays errors from io.Reader
 	doc := must(html.Parse(strings.NewReader(htmlString)))
 
-	nodes := cascadia.QueryAll(doc, sel)
-
 	var rt []string
-	for _, node := range nodes {
+	for _, node := range cascadia.QueryAll(doc, sel) {
 		var sb strings.Builder
 		must(0, html.Render(&sb, node))
 		rt = append(rt, sb.String())
@@ -36,15 +34,9 @@ func htmlReplaceSelector(htmlString, cssSelector, replacement string) (string, e
 
 	doc := must(html.Parse(strings.NewReader(htmlString)))
 
-	nodes := cascadia.QueryAll(doc, sel)
-
-	for _, node := range nodes {
-		replaceNode := &html.Node{
-			Type: html.RawNode,
-			Data: replacement,
-		}
-		node.Parent.InsertBefore(replaceNode, node)
-		node.Parent.RemoveChild(node)
+	for _, node := range cascadia.QueryAll(doc, sel) {
+		node.Type = html.RawNode
+		node.Data = replacement
 	}
 
 	var sb strings.Builder

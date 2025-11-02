@@ -2,6 +2,7 @@ package jqx
 
 import (
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -50,7 +51,16 @@ func checkHTMLReplaceSelector(htmlString, cssSelector, replacement string) strin
 	return must(htmlReplaceSelector(htmlString, cssSelector, replacement))
 }
 func checkHTMLDeleteSelector(htmlString, cssSelector string) string {
-	return must(htmlReplaceSelector(htmlString, cssSelector, ""))
+	rt := must(htmlReplaceSelector(htmlString, cssSelector, ""))
+	empty := must(htmlQuerySelector(rt, cssSelector))
+	if len(empty) != 0 {
+		panic(strings.Join(empty, " "))
+	}
+	rt2 := must(htmlReplaceSelector(rt, cssSelector, ""))
+	if rt != rt2 {
+		panic(rt2)
+	}
+	return rt
 }
 
 func TestHtmlReplaceSelector(t *testing.T) {

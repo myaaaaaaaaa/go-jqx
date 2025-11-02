@@ -19,7 +19,7 @@ import (
 
 var builtins = must(gojq.Parse(`
 	def shuffle: shuffle("A seed");
-	def htmlt:   htmlt("TEXT");
+	def htmlt:   htmlt("TEXT") | pagetrim;
 `)).FuncDefs
 
 type constString string

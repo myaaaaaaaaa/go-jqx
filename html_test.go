@@ -48,7 +48,30 @@ func TestHTMLQuerySelector(t *testing.T) {
 }
 
 func checkHTMLReplaceSelector(htmlString, cssSelector, replacement string) string {
-	return must(htmlReplaceSelector(htmlString, cssSelector, replacement))
+	rt := must(htmlReplaceSelector(htmlString, cssSelector, replacement))
+
+	cleaned := must(htmlReplaceSelector(htmlString, "nonmatching", replacement))
+	{
+		cleaned2 := must(htmlReplaceSelector(htmlString, "nonmatching", ""))
+		if cleaned != cleaned2 {
+			panic(cleaned2)
+		}
+		cleaned2 = must(htmlReplaceSelector(htmlString, cssSelector, "<>"))
+		if cleaned != cleaned2 {
+			panic(cleaned2)
+		}
+		cleaned2 = must(htmlReplaceSelector(cleaned, cssSelector, "<>"))
+		if cleaned != cleaned2 {
+			panic(cleaned2)
+		}
+	}
+
+	rt2 := must(htmlReplaceSelector(cleaned, cssSelector, replacement))
+	if rt != rt2 {
+		panic(rt2)
+	}
+
+	return rt
 }
 func checkHTMLDeleteSelector(htmlString, cssSelector string) string {
 	rt := must(htmlReplaceSelector(htmlString, cssSelector, ""))

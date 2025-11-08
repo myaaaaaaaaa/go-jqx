@@ -95,9 +95,9 @@ func htmlTokenize(htmlString, tokenFilter string) string {
 	return sb.String()
 }
 
-func htmlTokenizeToMaps(htmlString string) []map[string]string {
+func htmlTokenizeToMaps(htmlString string) []map[string]any {
 	tokenizer := html.NewTokenizer(strings.NewReader(htmlString))
-	var maps []map[string]string
+	var maps []map[string]any
 
 	for {
 		tokenType := tokenizer.Next()
@@ -111,7 +111,7 @@ func htmlTokenizeToMaps(htmlString string) []map[string]string {
 
 		raw := string(tokenizer.Raw())
 		token := tokenizer.Token()
-		m := map[string]string{
+		m := map[string]any{
 			"VALUE": token.Data,
 			"TYPE":  token.Type.String(),
 			"RAW":   raw,

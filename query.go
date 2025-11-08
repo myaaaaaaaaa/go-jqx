@@ -147,6 +147,11 @@ func htmlq2(input any, args []any) gojq.Iter {
 	}
 	return gojq.NewIter(rt)
 }
+func htmltok(input any, _ []any) gojq.Iter {
+	rt := htmlTokenizeToMaps(input.(string))
+	rtSlice := sliceIter[map[string]any](rt)
+	return &rtSlice
+}
 func htmlt(input any, args []any) any {
 	rt := htmlTokenize(input.(string), args[0].(string))
 	return rt
@@ -186,6 +191,7 @@ func (s *State) Compile(code constString) FanOut {
 		gojq.WithIterFunction("xmlq", 1, 1, xmlq),
 		gojq.WithIterFunction("htmlq", 1, 1, htmlq1),
 		gojq.WithIterFunction("htmlq", 2, 2, htmlq2),
+		gojq.WithIterFunction("htmltok", 0, 0, htmltok),
 		gojq.WithFunction("htmlt", 1, 1, htmlt),
 		gojq.WithVariables(globalKeys),
 	)

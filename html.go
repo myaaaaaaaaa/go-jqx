@@ -57,31 +57,9 @@ func htmlTokenize(htmlString, tokenFilter string) string {
 	tokenizer := html.NewTokenizer(strings.NewReader(htmlString))
 	var sb strings.Builder
 
-	callbacks := [16]func(){}
-	tagMatchers := map[string]bool{}
+	tokenFilterMap := map[string]bool{}
 	for k := range strings.FieldsSeq(tokenFilter) {
-		switch k {
-		case "COMMENT":
-			callbacks[html.CommentToken] = func() {
-				sb.Write(tokenizer.Raw())
-			}
-		case "TEXT":
-			callbacks[html.TextToken] = func() {
-				sb.Write(tokenizer.Raw())
-			}
-
-		default:
-			tagMatchers[k] = true
-
-			callbacks[html.StartTagToken] = func() {
-				name, _ := tokenizer.TagName()
-				// https://go.dev/wiki/CompilerOptimizations#map-lookup-by-byte
-				if !tagMatchers[string(name)] {
-					return
-				}
-				sb.Write(tokenizer.Raw())
-			}
-		}
+		tokenFilterMap[k] = true
 	}
 
 	for {
@@ -89,14 +67,20 @@ func htmlTokenize(htmlString, tokenFilter string) string {
 		if tokenType == html.ErrorToken {
 			break
 		}
+
+		keepToken := false
+
 		switch tokenType {
-		case html.SelfClosingTagToken, html.EndTagToken:
-			tokenType = html.StartTagToken
+		case html.StartTagToken, html.SelfClosingTagToken, html.EndTagToken:
+			name, _ := tokenizer.TagName()
+			// https://go.dev/wiki/CompilerOptimizations#map-lookup-by-byte
+			keepToken = tokenFilterMap[string(name)]
+		default:
+			keepToken = tokenFilterMap[strings.ToUpper(tokenType.String())]
 		}
 
-		f := callbacks[tokenType]
-		if f != nil {
-			f()
+		if keepToken {
+			sb.Write(tokenizer.Raw())
 		}
 	}
 

@@ -109,3 +109,31 @@ func htmlTokenize(htmlString, tokenFilter string) string {
 
 	return sb.String()
 }
+
+func htmlTokenizeToMaps(htmlString string) []map[string]string {
+	tokenizer := html.NewTokenizer(strings.NewReader(htmlString))
+	var maps []map[string]string
+
+	for {
+		tokenType := tokenizer.Next()
+		if tokenType == html.ErrorToken {
+			err := tokenizer.Err()
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			panic(err)
+		}
+
+		token := tokenizer.Token()
+		m := map[string]string{
+			"Data": token.Data,
+			"Type": token.Type.String(),
+		}
+		for _, a := range token.Attr {
+			m[a.Key] = a.Val
+		}
+		maps = append(maps, m)
+	}
+
+	return maps
+}

@@ -63,22 +63,23 @@ func htmlTokenize(htmlString, tokenFilter string) string {
 		switch k {
 		case "COMMENT":
 			callbacks[html.CommentToken] = func() {
-				sb.WriteString(tokenizer.Token().String())
+				sb.Write(tokenizer.Raw())
 			}
 		case "TEXT":
 			callbacks[html.TextToken] = func() {
-				sb.Write(tokenizer.Text())
+				sb.Write(tokenizer.Raw())
 			}
 
 		default:
 			tagMatchers[k] = true
 
 			callbacks[html.StartTagToken] = func() {
-				t := tokenizer.Token()
-				if !tagMatchers[t.Data] {
+				name, _ := tokenizer.TagName()
+				// https://go.dev/wiki/CompilerOptimizations#map-lookup-by-byte
+				if !tagMatchers[string(name)] {
 					return
 				}
-				sb.WriteString(t.String())
+				sb.Write(tokenizer.Raw())
 			}
 		}
 	}

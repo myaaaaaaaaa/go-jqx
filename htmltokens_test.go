@@ -16,8 +16,8 @@ func TestHTMLTokenize(t *testing.T) {
 	}
 
 	assert(
-		`<!-- This is a comment --><body><p>Some text</p></body>`,
-		`Some text`,
+		`<!-- This is a comment --><body><p>Some &lt;p&gt; text</p></body>`,
+		`Some &lt;p&gt; text`,
 	)
 	assert(
 		`<p>Hello</p><img src="image.jpg" alt="olleh"/>`,

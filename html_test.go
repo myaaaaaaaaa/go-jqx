@@ -133,26 +133,29 @@ func TestHtmlReplaceSelector(t *testing.T) {
 }
 
 func TestHtmlTokenizeToMaps(t *testing.T) {
-	const html = `<div><p class="foo">bar</p></div>`
+	const html = `<DIV><p  CLASS="foo">bar &lt;br&gt; a</p></DIV>`
 	maps := htmlTokenizeToMaps(html)
 
 	assertEqual(t, len(maps), 5)
 
-	assertEqual(t, maps[0]["Type"], "StartTag")
-	assertEqual(t, maps[0]["Data"], "div")
+	assertEqual(t, maps[0]["TYPE"], "StartTag")
+	assertEqual(t, maps[0]["VALUE"], "div")
+	assertEqual(t, maps[0]["RAW"], "<DIV>")
 
-	assertEqual(t, maps[1]["Type"], "StartTag")
-	assertEqual(t, maps[1]["Data"], "p")
+	assertEqual(t, maps[1]["TYPE"], "StartTag")
+	assertEqual(t, maps[1]["VALUE"], "p")
+	assertEqual(t, maps[1]["RAW"], `<p  CLASS="foo">`)
 	assertEqual(t, maps[1]["class"], "foo")
 
-	assertEqual(t, maps[2]["Type"], "Text")
-	assertEqual(t, maps[2]["Data"], "bar")
+	assertEqual(t, maps[2]["TYPE"], "Text")
+	assertEqual(t, maps[2]["VALUE"], "bar <br> a")
+	assertEqual(t, maps[2]["RAW"], "bar &lt;br&gt; a")
 
-	assertEqual(t, maps[3]["Type"], "EndTag")
-	assertEqual(t, maps[3]["Data"], "p")
+	assertEqual(t, maps[3]["TYPE"], "EndTag")
+	assertEqual(t, maps[3]["VALUE"], "p")
 
-	assertEqual(t, maps[4]["Type"], "EndTag")
-	assertEqual(t, maps[4]["Data"], "div")
+	assertEqual(t, maps[4]["TYPE"], "EndTag")
+	assertEqual(t, maps[4]["VALUE"], "div")
 }
 func TestHtmlDeleteSelector(t *testing.T) {
 	tests := []struct {

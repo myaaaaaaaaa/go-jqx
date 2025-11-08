@@ -109,10 +109,12 @@ func htmlTokenizeToMaps(htmlString string) []map[string]string {
 			panic(err)
 		}
 
+		raw := string(tokenizer.Raw())
 		token := tokenizer.Token()
 		m := map[string]string{
-			"Data": token.Data,
-			"Type": token.Type.String(),
+			"VALUE": token.Data,
+			"TYPE":  token.Type.String(),
+			"RAW":   raw,
 		}
 		for _, a := range token.Attr {
 			m[a.Key] = a.Val

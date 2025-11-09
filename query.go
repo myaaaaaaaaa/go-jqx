@@ -18,8 +18,9 @@ import (
 )
 
 var builtins = must(gojq.Parse(`
-	def shuffle: shuffle("A seed");
-	def htmlt:   htmlt("TEXT") | pagetrim;
+	def shuffle:    shuffle("A seed");
+	def htmlt:      htmlt("TEXT") | pagetrim;
+	def htmltok(f): htmlt(f) | htmltok;
 `)).FuncDefs
 
 type constString string

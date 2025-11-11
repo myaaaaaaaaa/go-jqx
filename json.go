@@ -12,18 +12,24 @@ func jsonTokenize(s string) ([]string, error) {
 	var tokens []string
 	for {
 		token, err := decoder.Token()
-		if err == io.EOF {
-			break
+
+		switch err {
+		case nil:
+		case io.EOF:
+			return tokens, nil
+		default:
+			return nil, err
 		}
-		if err != nil {
-			return tokens, err
-		}
-		switch token.(type) {
+
+		var tokenStr string
+		switch token := token.(type) {
 		case json.Delim:
 			continue
+		case string:
+			tokenStr = token
 		default:
-			tokens = append(tokens, fmt.Sprint(token))
+			tokenStr = fmt.Sprint(token)
 		}
+		tokens = append(tokens, tokenStr)
 	}
-	return tokens, nil
 }

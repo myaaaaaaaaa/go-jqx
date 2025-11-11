@@ -1,35 +1,16 @@
 package jqx
 
 import (
+	"bytes"
 	"encoding/json"
-	"fmt"
-	"io"
 	"strings"
 )
 
-func jsonTokenize(s string) ([]string, error) {
-	decoder := json.NewDecoder(strings.NewReader(s))
-	var tokens []string
-	for {
-		token, err := decoder.Token()
-
-		switch err {
-		case nil:
-		case io.EOF:
-			return tokens, nil
-		default:
-			return nil, err
-		}
-
-		var tokenStr string
-		switch token := token.(type) {
-		case json.Delim:
-			continue
-		case string:
-			tokenStr = token
-		default:
-			tokenStr = fmt.Sprint(token)
-		}
-		tokens = append(tokens, tokenStr)
+func prettyPrintJSONLines(s string, indent string) ([]string, error) {
+	var out bytes.Buffer
+	err := json.Indent(&out, []byte(s), "", indent)
+	if err != nil {
+		return nil, err
 	}
+	return strings.Split(out.String(), "\n"), nil
 }

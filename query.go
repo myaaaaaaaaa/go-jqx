@@ -19,6 +19,7 @@ import (
 
 var builtins = must(gojq.Parse(`
 	def shuffle:    shuffle("A seed");
+	def jsont:      jsont("\t");
 	def htmlt:      htmlt("TEXT") | pagetrim;
 	def htmltok(f): htmlt(f) | htmltok;
 `)).FuncDefs
@@ -119,6 +120,15 @@ func pagetrim(input any, _ []any) any {
 	return s
 }
 
+func jsont(input any, args []any) gojq.Iter {
+	indent := args[0]
+	rt, err := jsonTokenize(input.(string), indent.(string))
+	if err != nil {
+		return gojq.NewIter(err)
+	}
+	rtIter := sliceIter[string](rt)
+	return &rtIter
+}
 func xmlq(input any, args []any) gojq.Iter {
 	xpath := args[0]
 	rt, err := xmlQueryPath(input.(string), xpath.(string))
@@ -189,6 +199,7 @@ func (s *State) Compile(code constString) FanOut {
 		gojq.WithFunction("sha256", 0, 0, hasher(sha256.New)),
 		gojq.WithFunction("sha512", 0, 0, hasher(sha512.New)),
 		gojq.WithFunction("pagetrim", 0, 0, pagetrim),
+		gojq.WithIterFunction("jsont", 1, 1, jsont),
 		gojq.WithIterFunction("xmlq", 1, 1, xmlq),
 		gojq.WithIterFunction("htmlq", 1, 1, htmlq1),
 		gojq.WithIterFunction("htmlq", 2, 2, htmlq2),

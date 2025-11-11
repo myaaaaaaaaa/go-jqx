@@ -7,9 +7,10 @@ import (
 	"strings"
 )
 
-func jsonTokenize(s string) ([]string, error) {
+func jsonTokenize(s, indent string) ([]string, error) {
 	decoder := json.NewDecoder(strings.NewReader(s))
 	var tokens []string
+	indentCount := 0
 	for {
 		token, err := decoder.Token()
 
@@ -24,12 +25,18 @@ func jsonTokenize(s string) ([]string, error) {
 		var tokenStr string
 		switch token := token.(type) {
 		case json.Delim:
+			switch token {
+			case '{', '[':
+				indentCount++
+			case '}', ']':
+				indentCount--
+			}
 			continue
 		case string:
 			tokenStr = token
 		default:
 			tokenStr = fmt.Sprint(token)
 		}
-		tokens = append(tokens, tokenStr)
+		tokens = append(tokens, strings.Repeat(indent, indentCount)+tokenStr)
 	}
 }

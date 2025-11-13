@@ -22,6 +22,12 @@ var builtins = must(gojq.Parse(`
 	def jsont:      jsont("\t");
 	def htmlt:      htmlt("TEXT") | pagetrim;
 	def htmltok(f): htmlt(f) | htmltok;
+
+	def listregex($re; mapf):
+		. as $list
+		| .[] |= (mapf|tostring[:1]) | join("")
+		| [match($re; "g") | $list[.offset : .offset+.length]]
+	;
 `)).FuncDefs
 
 type constString string

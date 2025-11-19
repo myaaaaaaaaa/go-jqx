@@ -323,17 +323,9 @@ func main() {
 	if !isTerminal(os.Stdin) {
 		jqInput = string(must(io.ReadAll(os.Stdin)))
 	}
-
-	if _, err := d.query(); err != nil {
-		fmt.Fprintln(os.Stderr, errorStyle.Render(err.Error()))
-		return
-	}
-
 	jqFiles = os.Args[1:]
-	if len(jqFiles) > 0 {
-		if _, err := d.query(); err != nil {
-			d.raw = true
-		}
+	if _, err := d.query(); err != nil {
+		d.raw = true
 	}
 
 	d.code = "#placeholder"

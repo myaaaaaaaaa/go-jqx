@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -31,6 +32,19 @@ func must[T any](val T, err error) T {
 	return val
 }
 
+type SigPipeWriter struct {
+	io.WriteCloser
+}
+
+func (w SigPipeWriter) Write(b []byte) (int, error) {
+	rt, err := w.WriteCloser.Write(b)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(13)
+	}
+	return rt, nil
+}
+
 func main() {
 	prog := jqx.Program{
 		Args: os.Args[1:],
@@ -50,8 +64,9 @@ func main() {
 	} else if prog.StdoutIsTerminal {
 		os.Setenv("LESSCHARSET", "utf-8")
 
-		cmd := exec.Command("less", "-RSF")
+		cmd := exec.Command("less", "-RS")
 		pipe := must(cmd.StdinPipe())
+		pipe = SigPipeWriter{pipe}
 		cmd.Stdout = os.Stdout
 
 		if err := cmd.Start(); err != nil {

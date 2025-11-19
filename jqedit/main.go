@@ -35,6 +35,24 @@ type data struct {
 	raw     bool
 }
 
+var logged = map[string]bool{}
+
+func (d data) logScript() tea.Cmd {
+	code := d.code
+	code = must(gojq.Parse(code)).String()
+	code = strings.ReplaceAll(code, `'`, `'\''`)
+	code = "'" + code + "'"
+
+	if d.raw {
+		code = "-r " + code
+	}
+
+	if logged[code] {
+		return nil
+	}
+	logged[code] = true
+	return tea.Printf("    %s", code)
+}
 func (d data) query() (string, error) {
 	var output bytes.Buffer
 
@@ -196,7 +214,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		goto abortUpdate
 	}
 
-	cmd = tea.Batch(cmd, logScript(m.d.code))
+	cmd = tea.Batch(cmd, m.d.logScript())
 	m.viewport.SetContent(text)
 	m.vcontent = text
 
@@ -272,17 +290,6 @@ func isTerminal(f fs.File) bool {
 	return stat.Mode()&fs.ModeCharDevice != 0
 }
 
-var logged = map[string]bool{}
-
-func logScript(code string) tea.Cmd {
-	code = must(gojq.Parse(code)).String()
-
-	if logged[code] {
-		return nil
-	}
-	logged[code] = true
-	return tea.Printf("    %s", strings.ReplaceAll(code, `'`, `'\''`))
-}
 func msgFilter(m tea.Model, msg tea.Msg) tea.Msg {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:

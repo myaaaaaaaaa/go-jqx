@@ -23,6 +23,9 @@ var builtins = must(gojq.Parse(`
 	def htmlt:      htmlt("TEXT") | pagetrim;
 	def htmltok(f): htmlt(f) | htmltok;
 
+	def fields($delim; f): split($delim) | map(f) | join($delim);
+	def lines(f):          fields("\n"; f);
+
 	def listregex($re; mapf):
 		. as $list
 		| .[] |= (mapf|tostring[:1]) | join("")

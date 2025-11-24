@@ -51,7 +51,7 @@ func (d data) logScript() tea.Cmd {
 		return nil
 	}
 	logged[code] = true
-	return tea.Printf("    %s", code)
+	return tea.Printf("jqx %s", code)
 }
 func (d data) query() (string, error) {
 	var output bytes.Buffer

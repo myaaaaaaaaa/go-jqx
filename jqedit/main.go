@@ -3,12 +3,15 @@ package main
 import (
 	"bytes"
 	"cmp"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"os"
 	"path"
 	"runtime/debug"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -105,7 +108,7 @@ func (d data) query() (string, error) {
 }
 
 type (
-	saveMsg struct{}
+	saveMsg struct{ all bool }
 	tabMsg  struct{}
 )
 type updateMsg struct {
@@ -154,7 +157,7 @@ func tlink(name, url string) string {
 	return "\033]8;;" + url + "\033\\" + name + "\033]8;;\033\\"
 }
 
-var doSave = func(contents string) (msg string, err error) {
+func doSave(contents string) (msg string, err error) {
 	fname := fmt.Sprintf("jq-%d.txt", uptime())
 
 	outFile := cmp.Or(os.Getenv("XDG_RUNTIME_DIR"), "/tmp")
@@ -163,6 +166,22 @@ var doSave = func(contents string) (msg string, err error) {
 	msg = "saved to " + tlink(outFile, "file://"+outFile)
 	err = os.WriteFile(outFile, []byte(contents), 0666)
 	return
+}
+func doExport(contents string) (string, error) {
+	var fileObj map[string]string
+	err := json.Unmarshal([]byte(contents), &fileObj)
+	if err != nil {
+		return "", err
+	}
+
+	keys := slices.Sorted(maps.Keys(fileObj))
+	for _, k := range keys {
+		err := os.WriteFile(k, []byte(fileObj[k]), 0666)
+		if err != nil {
+			return "", err
+		}
+	}
+	return "exported to " + fmt.Sprint(keys), nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -187,7 +206,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case saveMsg:
 		var result string
-		result, m.err = doSave(m.vcontent)
+		if msg.all {
+			result, m.err = doExport(m.vcontent)
+		} else {
+			result, m.err = doSave(m.vcontent)
+		}
 		if m.err == nil {
 			return m, tea.Println("    " + result)
 		}
@@ -296,6 +319,8 @@ func msgFilter(m tea.Model, msg tea.Msg) tea.Msg {
 			}
 		case tea.KeyCtrlS:
 			return saveMsg{}
+		case tea.KeyCtrlE:
+			return saveMsg{all: true}
 		case tea.KeyTab:
 			return tabMsg{}
 		}

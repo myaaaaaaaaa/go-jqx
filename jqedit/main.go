@@ -135,7 +135,7 @@ func newModel(d data) model {
 		d:        d,
 	}
 
-	rt.textarea.SetHeight(3)
+	rt.textarea.SetHeight(4)
 	rt.textarea.Placeholder = "jq..."
 	rt.textarea.Focus()
 	rt.textarea.Cursor.SetMode(cursor.CursorStatic)
@@ -148,7 +148,7 @@ func (m model) Init() tea.Cmd {
 	)
 }
 
-const Margin = 8
+const Margin = 4
 
 func tlink(name, url string) string {
 	return "\033]8;;" + url + "\033\\" + name + "\033]8;;\033\\"
@@ -176,9 +176,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return msg.m, msg.c
 	case tea.WindowSizeMsg:
 		width := msg.Width - Margin*2
-		m.textarea.SetWidth(width * 3 / 4)
+		m.textarea.SetWidth(width)
 		m.viewport.Width = width
-		m.viewport.Height = msg.Height / 2
+		m.viewport.Height = msg.Height - 15
 		return m, nil
 	case tea.MouseMsg:
 		var cmd tea.Cmd
@@ -215,7 +215,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	cmd = tea.Batch(cmd, m.d.logScript())
-	m.viewport.SetContent(text)
+	m.viewport.SetContent(strings.ReplaceAll(text, "\t", "        "))
 	m.vcontent = text
 
 abortUpdate:
@@ -238,16 +238,11 @@ func (m model) View() string {
 		err = m.err.Error()
 	}
 
-	hr := subtleStyle.Render("────")
-	vr := subtleStyle.Render("│\n│")
+	hr := subtleStyle.Render(strings.Repeat("─", 8))
 
 	mainView := lipgloss.JoinVertical(lipgloss.Center,
 		hr,
-		lipgloss.JoinHorizontal(lipgloss.Center,
-			vr,
-			viewport,
-			vr,
-		),
+		viewport,
 		hr,
 
 		m.textarea.View(),

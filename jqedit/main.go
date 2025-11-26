@@ -206,11 +206,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var cmd tea.Cmd
 		m.viewport, cmd = m.viewport.Update(msg)
 		return m, cmd
-
 	case saveMsg:
 		m.err = msg(m.vcontent)
 		return m, nil
-
 	case func() (string, error):
 		text, err := msg()
 		m.err = err
@@ -345,9 +343,7 @@ var (
 )
 
 func main() {
-	d := data{
-		code: ".",
-	}
+	d := data{code: "."}
 
 	if !isTerminal(os.Stdin) {
 		jqInput = string(must(io.ReadAll(os.Stdin)))
@@ -391,16 +387,15 @@ func queryThread(send func(tea.Msg)) func(data) {
 	push, wait := debounceQueue[data]()
 
 	go func() {
-		var oldData data
+		var d data
 		var logged = map[string]bool{"": true}
 
 		for {
-			wait(&oldData)
+			wait(&d)
 
-			rt, err := oldData.query()
-
+			rt, err := d.query()
 			if err == nil {
-				log := oldData.format()
+				log := d.format()
 				if !logged[log] {
 					tPrintln(log)
 				}

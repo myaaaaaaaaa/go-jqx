@@ -14,7 +14,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/charmbracelet/bubbles/cursor"
@@ -389,24 +388,14 @@ func main() {
 }
 
 func queryThread(send func(tea.Msg)) func(data) {
-	ch := make(chan int, 1)
-	var d atomic.Pointer[data]
-	d.Store(&data{})
+	push, wait := debounceQueue[data]()
 
 	go func() {
 		var oldData data
 		var logged = map[string]bool{"": true}
 
 		for {
-			<-ch
-
-			{
-				d := *d.Load()
-				if oldData == d {
-					continue
-				}
-				oldData = d
-			}
+			wait(&oldData)
 
 			rt, err := oldData.query()
 
@@ -424,11 +413,5 @@ func queryThread(send func(tea.Msg)) func(data) {
 		}
 	}()
 
-	return func(newData data) {
-		d.Store(&newData)
-		select {
-		case ch <- 0:
-		default:
-		}
-	}
+	return push
 }

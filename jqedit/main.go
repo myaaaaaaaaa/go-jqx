@@ -14,6 +14,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/charmbracelet/bubbles/cursor"
@@ -38,11 +39,13 @@ type data struct {
 	raw     bool
 }
 
-var logged = map[string]bool{}
-
-func (d data) logScript() tea.Cmd {
+func (d data) format() string {
 	code := d.code
-	code = must(gojq.Parse(code)).String()
+	parsed, err := gojq.Parse(code)
+	if err != nil {
+		return ""
+	}
+	code = parsed.String()
 	code = strings.ReplaceAll(code, `'`, `'\''`)
 	code = "'" + code + "'"
 
@@ -50,11 +53,7 @@ func (d data) logScript() tea.Cmd {
 		code = "-r " + code
 	}
 
-	if logged[code] {
-		return nil
-	}
-	logged[code] = true
-	return tea.Printf("jqx %s", code)
+	return "jqx " + code
 }
 func (d data) query() (string, error) {
 	var output bytes.Buffer
@@ -80,7 +79,12 @@ func (d data) query() (string, error) {
 	if d.raw {
 		prog.Args = append(prog.Args, "-r")
 	}
-	prog.Args = append(prog.Args, " "+d.code)
+
+	code := strings.TrimSpace(d.code)
+	if code == "" {
+		code = "."
+	}
+	prog.Args = append(prog.Args, code)
 	prog.Args = append(prog.Args, jqFiles...)
 
 	var err error
@@ -146,9 +150,7 @@ func newModel(d data) model {
 	return rt
 }
 func (m model) Init() tea.Cmd {
-	return tea.Batch(
-		textarea.Blink,
-	)
+	return textarea.Blink
 }
 
 const Margin = 4
@@ -185,8 +187,6 @@ func doExport(contents string) (string, error) {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	oldData := m.d
-
 	switch msg := msg.(type) {
 	case updateMsg:
 		if msg.m == nil {
@@ -211,33 +211,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Println("    " + result)
 		}
 		return m, nil
+
+	case func() (string, error):
+		text, err := msg()
+		m.err = err
+		if err == nil {
+			m.viewport.SetContent(strings.ReplaceAll(text, "\t", "        "))
+			m.vcontent = text
+		}
+		return m, nil
+
 	case tabMsg:
 		m.d.compact = !m.d.compact
 	}
 
 	var cmd tea.Cmd
-	var text string
 	m.textarea, cmd = m.textarea.Update(msg)
+	m.d.code = m.textarea.Value()
+	queueQuery(m.d)
 
-	m.d.code = strings.TrimSpace(m.textarea.Value())
-	if m.d.code == "" {
-		m.d.code = "."
-	}
-
-	if m.d == oldData {
-		goto abortUpdate
-	}
-
-	text, m.err = m.d.query()
-	if m.err != nil {
-		goto abortUpdate
-	}
-
-	cmd = tea.Batch(cmd, m.d.logScript())
-	m.viewport.SetContent(strings.ReplaceAll(text, "\t", "        "))
-	m.vcontent = text
-
-abortUpdate:
 	return m, cmd
 }
 
@@ -331,6 +323,8 @@ func must[T any](val T, err error) T {
 	return val
 }
 
+var queueQuery func(data)
+
 func main() {
 	d := data{
 		code: ".",
@@ -343,8 +337,6 @@ func main() {
 	if _, err := d.query(); err != nil {
 		d.raw = true
 	}
-
-	d.code = "#placeholder"
 
 	lipgloss.SetDefaultRenderer(lipgloss.NewRenderer(os.Stderr))
 
@@ -364,10 +356,55 @@ func main() {
 		tea.WithOutput(os.Stderr),
 	)
 
+	queueQuery = queryThread(p)
+	queueQuery(d)
+
 	m := must(p.Run())
 
 	if !isTerminal(os.Stdout) {
 		m := m.(emptyModel).Model.(model)
 		os.Stdout.Write([]byte(m.vcontent))
+	}
+}
+
+func queryThread(p *tea.Program) func(data) {
+	ch := make(chan int, 1)
+	var d atomic.Pointer[data]
+	d.Store(&data{})
+
+	go func() {
+		var oldData data
+		var logged = map[string]bool{}
+
+		for {
+			<-ch
+
+			{
+				d := *d.Load()
+				if oldData == d {
+					continue
+				}
+				oldData = d
+			}
+
+			log := oldData.format()
+			if !logged[log] {
+				p.Println(log)
+			}
+			logged[log] = true
+
+			rt, err := oldData.query()
+			p.Send(func() (string, error) {
+				return rt, err
+			})
+		}
+	}()
+
+	return func(newData data) {
+		d.Store(&newData)
+		select {
+		case ch <- 0:
+		default:
+		}
 	}
 }

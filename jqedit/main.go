@@ -108,7 +108,7 @@ func (d data) query() (string, error) {
 }
 
 type (
-	saveMsg struct{ all bool }
+	saveMsg func(string) (string, error)
 	tabMsg  struct{}
 )
 type updateMsg struct {
@@ -206,11 +206,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case saveMsg:
 		var result string
-		if msg.all {
-			result, m.err = doExport(m.vcontent)
-		} else {
-			result, m.err = doSave(m.vcontent)
-		}
+		result, m.err = msg(m.vcontent)
 		if m.err == nil {
 			return m, tea.Println("    " + result)
 		}
@@ -318,9 +314,9 @@ func msgFilter(m tea.Model, msg tea.Msg) tea.Msg {
 				tea.Quit,
 			}
 		case tea.KeyCtrlS:
-			return saveMsg{}
+			return saveMsg(doSave)
 		case tea.KeyCtrlE:
-			return saveMsg{all: true}
+			return saveMsg(doExport)
 		case tea.KeyTab:
 			return tabMsg{}
 		}

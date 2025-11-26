@@ -46,6 +46,9 @@ func (d data) format() string {
 		return ""
 	}
 	code = parsed.String()
+	if code == "" {
+		return ""
+	}
 	code = strings.ReplaceAll(code, `'`, `'\''`)
 	code = "'" + code + "'"
 
@@ -376,7 +379,7 @@ func queryThread(send func(tea.Msg)) func(data) {
 
 	go func() {
 		var oldData data
-		var logged = map[string]bool{}
+		var logged = map[string]bool{"": true}
 
 		for {
 			<-ch
@@ -389,13 +392,16 @@ func queryThread(send func(tea.Msg)) func(data) {
 				oldData = d
 			}
 
-			log := oldData.format()
-			if !logged[log] {
-				tPrintln(log)
-			}
-			logged[log] = true
-
 			rt, err := oldData.query()
+
+			if err == nil {
+				log := oldData.format()
+				if !logged[log] {
+					tPrintln(log)
+				}
+				logged[log] = true
+			}
+
 			send(func() (string, error) {
 				return rt, err
 			})

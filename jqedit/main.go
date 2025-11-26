@@ -217,16 +217,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	// events that change the query
 	case tabMsg:
 		m.d.compact = !m.d.compact
+		queueQuery(m.d)
+		return m, nil
+	default:
+		var cmd tea.Cmd
+		m.textarea, cmd = m.textarea.Update(msg)
+		m.d.code = m.textarea.Value()
+		queueQuery(m.d)
+		return m, cmd
 	}
-
-	var cmd tea.Cmd
-	m.textarea, cmd = m.textarea.Update(msg)
-	m.d.code = m.textarea.Value()
-	queueQuery(m.d)
-
-	return m, cmd
 }
 
 var (

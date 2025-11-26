@@ -112,7 +112,7 @@ func (d data) query() (string, error) {
 }
 
 type (
-	saveMsg func(string) (string, error)
+	saveMsg func(string) error
 	tabMsg  struct{}
 )
 type updateMsg struct {
@@ -159,31 +159,31 @@ func tlink(name, url string) string {
 	return "\033]8;;" + url + "\033\\" + name + "\033]8;;\033\\"
 }
 
-func doSave(contents string) (msg string, err error) {
+func doSave(contents string) error {
 	fname := fmt.Sprintf("jq-%d.txt", uptime())
 
 	outFile := cmp.Or(os.Getenv("XDG_RUNTIME_DIR"), "/tmp")
 	outFile = path.Join(outFile, fname)
 
-	msg = "saved to " + tlink(outFile, "file://"+outFile)
-	err = os.WriteFile(outFile, []byte(contents), 0666)
-	return
+	tPrintln("saved to " + tlink(outFile, "file://"+outFile))
+	return os.WriteFile(outFile, []byte(contents), 0666)
 }
-func doExport(contents string) (string, error) {
+func doExport(contents string) error {
 	var fileObj map[string]string
 	err := json.Unmarshal([]byte(contents), &fileObj)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	keys := slices.Sorted(maps.Keys(fileObj))
 	for _, k := range keys {
 		err := os.WriteFile(k, []byte(fileObj[k]), 0666)
 		if err != nil {
-			return "", err
+			return err
 		}
 	}
-	return "exported to " + fmt.Sprint(keys), nil
+	tPrintln("exported to " + fmt.Sprint(keys))
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -205,11 +205,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case saveMsg:
-		var result string
-		result, m.err = msg(m.vcontent)
-		if m.err == nil {
-			return m, tea.Println("    " + result)
-		}
+		m.err = msg(m.vcontent)
 		return m, nil
 
 	case func() (string, error):
@@ -323,7 +319,10 @@ func must[T any](val T, err error) T {
 	return val
 }
 
-var queueQuery func(data)
+var (
+	queueQuery func(data)
+	tPrintln   func(...any)
+)
 
 func main() {
 	d := data{
@@ -356,7 +355,8 @@ func main() {
 		tea.WithOutput(os.Stderr),
 	)
 
-	queueQuery = queryThread(p)
+	tPrintln = func(a ...any) { go p.Println(a...) }
+	queueQuery = queryThread(p.Send)
 	queueQuery(d)
 
 	m := must(p.Run())
@@ -367,7 +367,7 @@ func main() {
 	}
 }
 
-func queryThread(p *tea.Program) func(data) {
+func queryThread(send func(tea.Msg)) func(data) {
 	ch := make(chan int, 1)
 	var d atomic.Pointer[data]
 	d.Store(&data{})
@@ -389,12 +389,12 @@ func queryThread(p *tea.Program) func(data) {
 
 			log := oldData.format()
 			if !logged[log] {
-				p.Println(log)
+				tPrintln(log)
 			}
 			logged[log] = true
 
 			rt, err := oldData.query()
-			p.Send(func() (string, error) {
+			send(func() (string, error) {
 				return rt, err
 			})
 		}

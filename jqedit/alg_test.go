@@ -12,10 +12,10 @@ func TestDebounce(t *testing.T) {
 	push(5)
 	push(7)
 
-	i := 0
-	wait(&i)
-	if i != 7 {
-		t.Error(i)
+	got := 0
+	wait(&got)
+	if got != 7 {
+		t.Error(got)
 	}
 
 	go func() {
@@ -26,8 +26,24 @@ func TestDebounce(t *testing.T) {
 		push(1)
 	}()
 
-	wait(&i)
-	if i != 1 {
-		t.Error(i)
+	wait(&got)
+	if got != 1 {
+		t.Error(got)
+	}
+
+	go func() {
+		for i := range 10 {
+			for range 100 {
+				push(i)
+				runtime.Gosched()
+			}
+		}
+	}()
+
+	for want := range 10 {
+		wait(&got)
+		if got != want {
+			t.Error(got)
+		}
 	}
 }

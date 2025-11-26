@@ -38,9 +38,10 @@ func TestDebounce(t *testing.T) {
 				runtime.Gosched()
 			}
 		}
+		push(10)
 	}()
 
-	for want := range 10 {
+	for want := range 11 {
 		wait(&got)
 		if got != want {
 			t.Error(got)

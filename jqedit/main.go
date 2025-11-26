@@ -201,6 +201,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.textarea.SetWidth(width)
 		m.viewport.Width = width
 		m.viewport.Height = msg.Height - 15
+		m.viewportContent()
 		return m, nil
 	case tea.MouseMsg:
 		var cmd tea.Cmd
@@ -215,8 +216,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		text, err := msg()
 		m.err = err
 		if err == nil {
-			m.viewport.SetContent(strings.ReplaceAll(text, "\t", "        "))
 			m.vcontent = text
+			m.viewportContent()
 		}
 		return m, nil
 
@@ -232,6 +233,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		queueQuery(m.d)
 		return m, cmd
 	}
+}
+
+func (m *model) viewportContent() {
+	text := m.vcontent
+	text = strings.ReplaceAll(text, "\t", "        ")
+	lines := strings.Split(text, "\n")
+	for line := range lines {
+		line := &lines[line]
+		n := max(m.viewport.Width-3, 0)
+		if len(*line) > n {
+			*line = (*line)[:n] + "..."
+		}
+	}
+	text = strings.Join(lines, "\n")
+	m.viewport.SetContent(text)
 }
 
 var (

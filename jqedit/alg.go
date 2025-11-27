@@ -31,13 +31,15 @@ func watcher[T comparable]() (set func(T), wait func(*T)) {
 }
 
 func truncLines(text string, width int) string {
+	const ellipses = "..................."
+
 	text = strings.ReplaceAll(text, "\t", "        ")
 	lines := strings.Split(text, "\n")
 	for line := range lines {
 		line := &lines[line]
-		n := max(width-3, 0)
-		if len(*line) > n {
-			*line = (*line)[:n] + "..."
+		if len(*line) > width {
+			n := max(width-3, 0)
+			*line = (*line)[:n] + ellipses[:width-n]
 		}
 	}
 	text = strings.Join(lines, "\n")

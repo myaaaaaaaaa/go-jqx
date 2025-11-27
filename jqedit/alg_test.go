@@ -57,9 +57,29 @@ func TestWatcherFull(t *testing.T) {
 }
 
 func TestTruncLines(t *testing.T) {
-	got := truncLines("abcdefg", 10)
+	got := truncLines("abcdefg", 20)
 	assertEqual(t, got, "abcdefg")
 
 	got = truncLines("abcdefg", 6)
 	assertEqual(t, got, "abc...")
+
+	t.Run("over limit", func(t *testing.T) {
+		for n := range 8 {
+			got := truncLines("1234567", n)
+			assertEqual(t, len(got), n)
+		}
+	})
+	t.Run("under limit", func(t *testing.T) {
+		for n := range 10 {
+			want := "abcdefg"
+			got := truncLines(want, n+7)
+			assertEqual(t, got, want)
+		}
+	})
+	t.Run("no overflow", func(t *testing.T) {
+		for n := range 10 {
+			got := truncLines("abcdefg", n)
+			assertEqual(t, len(got) <= n, true)
+		}
+	})
 }

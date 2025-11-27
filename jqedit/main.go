@@ -221,13 +221,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// events that change the query
 	case tabMsg:
 		m.d.compact = !m.d.compact
-		changeQuery(m.d)
+		queryChanged(m.d)
 		return m, nil
 	default:
 		var cmd tea.Cmd
 		m.textarea, cmd = m.textarea.Update(msg)
 		m.d.code = m.textarea.Value()
-		changeQuery(m.d)
+		queryChanged(m.d)
 		return m, cmd
 	}
 }
@@ -338,12 +338,12 @@ func must[T any](val T, err error) T {
 }
 
 var (
-	changeQuery func(data)
-	tPrintln    func(...any)
+	queryChanged func(data)
+	tPrintln     func(...any)
 )
 
 func main() {
-	d := data{code: "."}
+	var d data
 
 	if !isTerminal(os.Stdin) {
 		jqInput = string(must(io.ReadAll(os.Stdin)))
@@ -372,8 +372,7 @@ func main() {
 	)
 
 	tPrintln = func(a ...any) { go p.Println(a...) }
-	changeQuery = queryThread(p.Send)
-	changeQuery(d)
+	queryChanged = queryThread(p.Send)
 
 	m := must(p.Run())
 
@@ -391,8 +390,6 @@ func queryThread(send func(tea.Msg)) func(data) {
 		var logged = map[string]bool{"": true}
 
 		for {
-			wait(&d)
-
 			rt, err := d.query()
 			if err == nil {
 				log := d.format()
@@ -405,6 +402,8 @@ func queryThread(send func(tea.Msg)) func(data) {
 			send(func() (string, error) {
 				return rt, err
 			})
+
+			wait(&d)
 		}
 	}()
 

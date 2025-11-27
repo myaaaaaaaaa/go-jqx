@@ -5,12 +5,12 @@ import (
 	"testing"
 )
 
-func TestDebounce(t *testing.T) {
-	push, wait := debounceQueue[int]()
+func TestWatcher(t *testing.T) {
+	set, wait := watcher[int]()
 
-	push(3)
-	push(5)
-	push(7)
+	set(3)
+	set(5)
+	set(7)
 
 	got := 0
 	wait(&got)
@@ -20,10 +20,10 @@ func TestDebounce(t *testing.T) {
 
 	go func() {
 		for range 100 {
-			push(7)
+			set(7)
 			runtime.Gosched()
 		}
-		push(1)
+		set(1)
 	}()
 
 	wait(&got)
@@ -34,11 +34,11 @@ func TestDebounce(t *testing.T) {
 	go func() {
 		for i := range 10 {
 			for range 100 {
-				push(i)
+				set(i)
 				runtime.Gosched()
 			}
 		}
-		push(10)
+		set(10)
 	}()
 
 	for want := range 11 {

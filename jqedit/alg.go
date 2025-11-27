@@ -4,12 +4,12 @@ import (
 	"sync/atomic"
 )
 
-func debounceQueue[T comparable]() (push func(T), wait func(*T)) {
+func watcher[T comparable]() (set func(T), wait func(*T)) {
 	ch := make(chan int, 1)
 	var payload atomic.Pointer[T]
 	payload.Store(new(T))
 
-	push = func(val T) {
+	set = func(val T) {
 		payload.Store(&val)
 		select {
 		case ch <- 0:

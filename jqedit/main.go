@@ -261,9 +261,13 @@ func (m model) View() string {
 
 		m.textarea.View(),
 	)
+	mainView = lipgloss.JoinHorizontal(lipgloss.Center,
+		strings.Repeat(" ", Margin-1),
+		mainView,
+	)
+	mainView += "\n" + errorStyle.Render(err)
 
-	return lipgloss.JoinHorizontal(lipgloss.Center, strings.Repeat(" ", Margin-1), mainView) +
-		"\n" + errorStyle.Render(err)
+	return mainView
 }
 
 type emptyModel struct{ tea.Model }

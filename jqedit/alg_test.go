@@ -21,9 +21,7 @@ func TestWatcherDebounce(t *testing.T) {
 
 	got := 0
 	wait(&got)
-	if got != 7 {
-		t.Error("want 7  got", got)
-	}
+	assertEqual(t, got, 7)
 }
 func TestWatcherWait(t *testing.T) {
 	set, wait := watcher[int]()
@@ -37,9 +35,7 @@ func TestWatcherWait(t *testing.T) {
 
 	got := 0
 	wait(&got)
-	if got != 4 {
-		t.Error("want 4  got", got)
-	}
+	assertEqual(t, got, 4)
 }
 func TestWatcherFull(t *testing.T) {
 	set, wait := watcher[int]()
@@ -56,10 +52,7 @@ func TestWatcherFull(t *testing.T) {
 	got := 100
 	for want := range 31 {
 		wait(&got)
-		if got != want {
-			t.Error("got", got)
-			t.Error("want", want)
-		}
+		assertEqual(t, got, want)
 	}
 }
 

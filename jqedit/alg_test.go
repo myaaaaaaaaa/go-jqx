@@ -14,7 +14,7 @@ func TestWatcherDebounce(t *testing.T) {
 	got := 0
 	wait(&got)
 	if got != 7 {
-		t.Error(got)
+		t.Error("want 7  got", got)
 	}
 }
 func TestWatcherWait(t *testing.T) {
@@ -30,26 +30,27 @@ func TestWatcherWait(t *testing.T) {
 	got := 0
 	wait(&got)
 	if got != 4 {
-		t.Error(got)
+		t.Error("want 4  got", got)
 	}
 }
 func TestWatcherFull(t *testing.T) {
 	set, wait := watcher[int]()
 	go func() {
-		for i := range 10 {
+		for i := range 30 {
 			for range 100 {
 				set(i)
 				runtime.Gosched()
 			}
 		}
-		set(10)
+		set(30)
 	}()
 
 	got := 100
-	for want := range 11 {
+	for want := range 31 {
 		wait(&got)
 		if got != want {
-			t.Error(got)
+			t.Error("got", got)
+			t.Error("want", want)
 		}
 	}
 }

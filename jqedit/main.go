@@ -116,11 +116,8 @@ func (d data) query() (string, error) {
 type (
 	saveMsg func(string) error
 	tabMsg  struct{}
+	quitMsg struct{}
 )
-type updateMsg struct {
-	m tea.Model
-	c tea.Cmd
-}
 
 func init() {
 	textarea.DefaultKeyMap.WordForward = key.NewBinding(key.WithKeys("ctrl+right"))
@@ -190,11 +187,8 @@ func doExport(contents string) error {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case updateMsg:
-		if msg.m == nil {
-			msg.m = m
-		}
-		return msg.m, msg.c
+	case quitMsg:
+		return emptyModel{m}, tea.Quit
 	case tea.WindowSizeMsg:
 		width := msg.Width - Margin*2
 		m.textarea.SetWidth(width)
@@ -308,10 +302,7 @@ func msgFilter(m tea.Model, msg tea.Msg) tea.Msg {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEsc, tea.KeyCtrlC, tea.KeyCtrlQ:
-			return updateMsg{
-				emptyModel{m},
-				tea.Quit,
-			}
+			return quitMsg{}
 		case tea.KeyCtrlS:
 			return saveMsg(doSave)
 		case tea.KeyCtrlE:

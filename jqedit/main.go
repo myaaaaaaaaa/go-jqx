@@ -236,6 +236,9 @@ var (
 			Foreground(lipgloss.Color("#880000"))
 	subtleStyle = lipgloss.Style{}.
 			Foreground(lipgloss.Color("#cccccc"))
+	commentStyle = lipgloss.Style{}.
+			Italic(true).
+			Foreground(lipgloss.Color("#888888"))
 )
 
 func (m model) View() string {
@@ -342,11 +345,7 @@ func main() {
 	buildInfo, _ := debug.ReadBuildInfo()
 	if buildInfo != nil {
 		s := "jqedit " + buildInfo.Main.Version + " built with " + buildInfo.GoVersion
-		s = lipgloss.NewStyle().
-			Italic(true).
-			Foreground(lipgloss.Color("#888888")).
-			Render(s)
-		fmt.Fprintln(os.Stderr, s)
+		fmt.Fprintln(os.Stderr, commentStyle.Render(s))
 	}
 
 	p := tea.NewProgram(newModel(d),

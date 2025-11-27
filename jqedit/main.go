@@ -372,7 +372,12 @@ func main() {
 	)
 
 	tPrintln = func(a ...any) { go p.Println(a...) }
-	queryChanged = queryThread(p.Send)
+
+	{
+		set, wait := watcher[data]()
+		queryChanged = set
+		go queryThread(p.Send, wait)
+	}
 
 	m := must(p.Run())
 
@@ -382,30 +387,24 @@ func main() {
 	}
 }
 
-func queryThread(send func(tea.Msg)) func(data) {
-	set, wait := watcher[data]()
+func queryThread(send func(tea.Msg), wait func(*data)) {
+	var d data
+	var logged = map[string]bool{"": true}
 
-	go func() {
-		var d data
-		var logged = map[string]bool{"": true}
-
-		for {
-			rt, err := d.query()
-			if err == nil {
-				log := d.format()
-				if !logged[log] {
-					tPrintln(log)
-				}
-				logged[log] = true
+	for {
+		rt, err := d.query()
+		if err == nil {
+			log := d.format()
+			if !logged[log] {
+				tPrintln(log)
 			}
-
-			send(func() (string, error) {
-				return rt, err
-			})
-
-			wait(&d)
+			logged[log] = true
 		}
-	}()
 
-	return set
+		send(func() (string, error) {
+			return rt, err
+		})
+
+		wait(&d)
+	}
 }

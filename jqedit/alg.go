@@ -3,6 +3,8 @@ package main
 import (
 	"strings"
 	"sync/atomic"
+	"unicode"
+	"unicode/utf8"
 )
 
 func watcher[T comparable]() (set func(T), wait func(*T)) {
@@ -33,6 +35,19 @@ func watcher[T comparable]() (set func(T), wait func(*T)) {
 func truncLines(text string, width int) string {
 	const ellipses = "..................."
 
+	text = strings.Map(func(r rune) rune {
+		if !unicode.IsPrint(r) {
+			switch r {
+			case '\n', '\t', ' ':
+			default:
+				return '.'
+			}
+		}
+		if r == utf8.RuneError {
+			return '?'
+		}
+		return r
+	}, text)
 	text = strings.ReplaceAll(text, "\t", "        ")
 	lines := strings.Split(text, "\n")
 	for line := range lines {

@@ -5,6 +5,14 @@ import (
 	"testing"
 )
 
+func assertEqual[T comparable](tb testing.TB, got T, want T) {
+	tb.Helper()
+	if got != want {
+		tb.Error("got", got)
+		tb.Error("want", want)
+	}
+}
+
 func TestWatcherDebounce(t *testing.T) {
 	set, wait := watcher[int]()
 	set(3)
@@ -53,4 +61,12 @@ func TestWatcherFull(t *testing.T) {
 			t.Error("want", want)
 		}
 	}
+}
+
+func TestTruncLines(t *testing.T) {
+	got := truncLines("abcdefg", 10)
+	assertEqual(t, got, "abcdefg")
+
+	got = truncLines("abcdefg", 6)
+	assertEqual(t, got, "abc...")
 }

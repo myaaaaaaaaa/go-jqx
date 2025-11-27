@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"sync/atomic"
 )
 
@@ -27,4 +28,18 @@ func watcher[T comparable]() (set func(T), wait func(*T)) {
 	}
 
 	return
+}
+
+func truncLines(text string, width int) string {
+	text = strings.ReplaceAll(text, "\t", "        ")
+	lines := strings.Split(text, "\n")
+	for line := range lines {
+		line := &lines[line]
+		n := max(width-3, 0)
+		if len(*line) > n {
+			*line = (*line)[:n] + "..."
+		}
+	}
+	text = strings.Join(lines, "\n")
+	return text
 }

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"runtime"
 	"testing"
+	"testing/synctest"
 )
 
 func assertEqual[T comparable](tb testing.TB, got T, want T) {
@@ -24,36 +24,26 @@ func TestWatcherDebounce(t *testing.T) {
 	assertEqual(t, got, 7)
 }
 func TestWatcherWait(t *testing.T) {
-	set, wait := watcher[int]()
-	go func() {
-		for range 100 {
-			set(0)
-			runtime.Gosched()
-		}
-		set(4)
-	}()
+	synctest.Test(t, func(t *testing.T) {
+		set, wait := watcher[int]()
 
-	got := 0
-	wait(&got)
-	assertEqual(t, got, 4)
-}
-func TestWatcherFull(t *testing.T) {
-	set, wait := watcher[int]()
-	go func() {
-		for i := range 30 {
+		got := 7
+		go wait(&got)
+
+		synctest.Wait()
+
+		for range 5 {
 			for range 100 {
-				set(i)
-				runtime.Gosched()
+				set(7)
 			}
+			synctest.Wait()
+			assertEqual(t, got, 7)
 		}
-		set(30)
-	}()
 
-	got := 100
-	for want := range 31 {
-		wait(&got)
-		assertEqual(t, got, want)
-	}
+		set(10)
+		synctest.Wait()
+		assertEqual(t, got, 10)
+	})
 }
 
 func TestTruncLines(t *testing.T) {

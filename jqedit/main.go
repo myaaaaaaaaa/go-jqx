@@ -371,10 +371,12 @@ func main() {
 }
 
 func queryThread(send func(tea.Msg), wait func(*data)) {
-	var d data
+	d := data{code: ".  #placeholder..."}
 	var logged = map[string]bool{"": true}
 
 	for {
+		wait(&d)
+
 		rt, err := d.query()
 		if err == nil {
 			log := d.format()
@@ -387,7 +389,5 @@ func queryThread(send func(tea.Msg), wait func(*data)) {
 		send(func() (string, error) {
 			return rt, err
 		})
-
-		wait(&d)
 	}
 }

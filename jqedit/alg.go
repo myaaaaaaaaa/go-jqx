@@ -9,11 +9,11 @@ import (
 
 func watcher[T comparable]() (set func(T), wait func(*T)) {
 	ch := make(chan int, 1)
-	var payload atomic.Pointer[T]
-	payload.Store(new(T))
+	var storage atomic.Pointer[T]
+	storage.Store(new(T))
 
-	set = func(val T) {
-		payload.Store(&val)
+	set = func(value T) {
+		storage.Store(&value)
 		select {
 		case ch <- 0:
 		default:
@@ -21,12 +21,12 @@ func watcher[T comparable]() (set func(T), wait func(*T)) {
 	}
 
 	wait = func(orig *T) {
-		val := *orig
-		for val == *orig {
+		value := *orig
+		for value == *orig {
 			<-ch
-			val = *payload.Load()
+			value = *storage.Load()
 		}
-		*orig = val
+		*orig = value
 	}
 
 	return

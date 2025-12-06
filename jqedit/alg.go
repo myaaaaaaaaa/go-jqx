@@ -7,6 +7,9 @@ import (
 	"unicode/utf8"
 )
 
+// watcher creates a pair of functions to set and wait for a value to change.
+// The 'set' function updates the value and notifies any waiting goroutines, while the 'wait' function blocks until the value is updated.
+// This is useful for signaling changes between goroutines.
 func watcher[T comparable]() (set func(T), wait func(*T)) {
 	ch := make(chan int, 1)
 	var storage atomic.Pointer[T]
@@ -14,6 +17,16 @@ func watcher[T comparable]() (set func(T), wait func(*T)) {
 
 	set = func(value T) {
 		storage.Store(&value)
+
+		// Non-blocking send to signal an update.
+		// Because the channel has a buffer size of 1, if a receiver is
+		// not ready, this send will either fill the buffer or, if the
+		// buffer is already full, the default case will be taken.
+		// In either case, any call to wait() is guaranteed to see a
+		// signal and then load the latest value from the atomic pointer.
+		// This mechanism coalesces multiple rapid updates into a single
+		// notification, preventing a backlog of signals and ensuring the
+		// waiter always gets the most recent value.
 		select {
 		case ch <- 0:
 		default:

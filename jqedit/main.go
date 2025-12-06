@@ -215,13 +215,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// events that change the query
 	case tabMsg:
 		m.d.compact = !m.d.compact
-		queryChanged(m.d)
+		setQuery(m.d)
 		return m, nil
 	default:
 		var cmd tea.Cmd
 		m.textarea, cmd = m.textarea.Update(msg)
 		m.d.code = m.textarea.Value()
-		queryChanged(m.d)
+		setQuery(m.d)
 		return m, cmd
 	}
 }
@@ -325,8 +325,8 @@ func must[T any](val T, err error) T {
 }
 
 var (
-	queryChanged func(data)
-	tPrintln     func(...any)
+	setQuery func(data)
+	tPrintln func(...any)
 )
 
 func main() {
@@ -358,7 +358,7 @@ func main() {
 
 	{
 		set, wait := watcher[data]()
-		queryChanged = set
+		setQuery = set
 		go queryThread(p.Send, wait)
 	}
 

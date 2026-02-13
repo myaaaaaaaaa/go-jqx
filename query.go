@@ -36,17 +36,6 @@ var builtins = must(gojq.Parse(`
 type constString string
 type FanOut func(any) iter.Seq[any]
 
-type sliceIter[T any] []T
-
-func (iter *sliceIter[T]) Next() (any, bool) {
-	if len(*iter) == 0 {
-		return nil, false
-	}
-	value := (*iter)[0]
-	*iter = (*iter)[1:]
-	return value, true
-}
-
 type nexter func() (any, bool)
 
 func (f nexter) Next() (any, bool) { return f() }
@@ -135,8 +124,7 @@ func jsont(input any, args []any) gojq.Iter {
 	if err != nil {
 		return gojq.NewIter(err)
 	}
-	rtIter := sliceIter[string](rt)
-	return &rtIter
+	return gojq.NewIter(rt...)
 }
 func xmlq(input any, args []any) gojq.Iter {
 	xpath := args[0]
@@ -144,8 +132,7 @@ func xmlq(input any, args []any) gojq.Iter {
 	if err != nil {
 		return gojq.NewIter(err)
 	}
-	rtIter := sliceIter[string](rt)
-	return &rtIter
+	return gojq.NewIter(rt...)
 }
 func htmlq1(input any, args []any) gojq.Iter {
 	selector := args[0]
@@ -153,8 +140,7 @@ func htmlq1(input any, args []any) gojq.Iter {
 	if err != nil {
 		return gojq.NewIter(err)
 	}
-	rtSlice := sliceIter[string](rt)
-	return &rtSlice
+	return gojq.NewIter(rt...)
 }
 func htmlq2(input any, args []any) gojq.Iter {
 	rt, err := htmlReplaceSelector(
@@ -169,8 +155,7 @@ func htmlq2(input any, args []any) gojq.Iter {
 }
 func htmltok(input any, _ []any) gojq.Iter {
 	rt := htmlTokenizeToMaps(input.(string))
-	rtSlice := sliceIter[map[string]any](rt)
-	return &rtSlice
+	return gojq.NewIter(rt...)
 }
 func htmlt(input any, args []any) any {
 	rt := htmlTokenize(input.(string), args[0].(string))
